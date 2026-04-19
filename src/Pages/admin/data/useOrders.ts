@@ -39,7 +39,8 @@ function normalizeApiOrder(apiOrder: ApiOrder): Order {
 }
 
 async function fetchJson(url: string, options?: RequestInit) {
-  const response = await fetch(url, {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const response = await fetch(`${API_URL}${url}`, {
     credentials: "include",
     ...options,
     headers: {
