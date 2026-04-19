@@ -95,7 +95,7 @@ export function setAdminSessionCookie(res, token) {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
     sameSite: "Strict",
-    path: "/api",
+    path: "/",
     maxAge: maxAgeSeconds,
   });
   res.setHeader("Set-Cookie", cookie);
@@ -106,7 +106,7 @@ export function clearAdminSessionCookie(res) {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
     sameSite: "Strict",
-    path: "/api",
+    path: "/",
     maxAge: 0,
   });
   res.setHeader("Set-Cookie", cookie);
