@@ -2,6 +2,7 @@
 // Fetches real orders from API. Shows error if API fails (no silent dummy fallback).
 
 import { useCallback, useEffect, useState } from "react";
+import { apiClient } from "@/services/api";
 import type { Order, OrderStatus } from "./types";
 import { normalizeStatus } from "./types";
 
@@ -38,28 +39,6 @@ function normalizeApiOrder(apiOrder: ApiOrder): Order {
   };
 }
 
-async function fetchJson(url: string, options?: RequestInit) {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const response = await fetch(`${API_URL}${url}`, {
-    credentials: "include",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers || {}),
-    },
-  });
-
-  const payload = await response
-    .json()
-    .catch(() => ({ message: `HTTP ${response.status}` }));
-
-  if (!response.ok) {
-    throw new Error(payload?.message || `HTTP ${response.status}`);
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +57,7 @@ export function useOrders() {
     setLoading(true);
     setError("");
     try {
-      const payload = await fetchJson("/api/admin/orders");
+      const payload = await apiClient.get<Record<string, unknown>>("/admin/orders");
       const rawOrders = Array.isArray(payload.orders) ? (payload.orders as ApiOrder[]) : [];
       const normalized = rawOrders
         .map((item) => normalizeApiOrder(item))
@@ -102,10 +81,10 @@ export function useOrders() {
     setUpdatingId(orderId);
 
     try {
-      const payload = await fetchJson(`/api/admin/orders/${orderId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const payload = await apiClient.patch<Record<string, unknown>>(
+        `/admin/orders/${orderId}/status`,
+        { status: newStatus }
+      );
 
       // Use the server-returned order if available to stay in sync
       if (payload.order) {
@@ -156,7 +135,7 @@ export function useAdminAuth() {
   useEffect(() => {
     void (async () => {
       try {
-        await fetchJson("/api/admin/me", { method: "GET" });
+        await apiClient.get("/admin/me");
         setIsUnlocked(true);
       } catch {
         setIsUnlocked(false);
@@ -169,10 +148,7 @@ export function useAdminAuth() {
   const login = async (email: string, password: string) => {
     setAuthError("");
     try {
-      await fetchJson("/api/admin/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
+      await apiClient.post("/admin/login", { email, password });
       setIsUnlocked(true);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Login failed");
@@ -181,7 +157,7 @@ export function useAdminAuth() {
 
   const logout = async () => {
     try {
-      await fetchJson("/api/admin/logout", { method: "POST" });
+      await apiClient.post("/admin/logout");
     } catch {
       // Ignore
     } finally {

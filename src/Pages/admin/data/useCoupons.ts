@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { apiClient } from "@/services/api";
 
 export type Coupon = {
   id: string;
@@ -19,27 +20,6 @@ export type Coupon = {
   createdAt: string;
 };
 
-async function fetchJson(url: string, options?: RequestInit) {
-  const response = await fetch(url, {
-    credentials: "include",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers || {}),
-    },
-  });
-
-  const payload = await response
-    .json()
-    .catch(() => ({ message: `HTTP ${response.status}` }));
-
-  if (!response.ok) {
-    throw new Error(payload?.message || `HTTP ${response.status}`);
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function useCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +30,7 @@ export function useCoupons() {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchJson("/api/admin/coupons");
+      const data = await apiClient.get<Record<string, unknown>>("/admin/coupons");
       setCoupons(data.coupons as Coupon[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load coupons");
@@ -62,10 +42,7 @@ export function useCoupons() {
   const createCoupon = async (payload: Partial<Coupon>) => {
     setActionLoading(true);
     try {
-      const data = await fetchJson("/api/admin/coupons", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const data = await apiClient.post<Record<string, unknown>>("/admin/coupons", payload);
       setCoupons((prev) => [data.coupon as Coupon, ...prev]);
       return data.coupon as Coupon;
     } finally {
@@ -76,10 +53,7 @@ export function useCoupons() {
   const updateCoupon = async (id: string, payload: Partial<Coupon>) => {
     setActionLoading(true);
     try {
-      const data = await fetchJson(`/api/admin/coupons/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
+      const data = await apiClient.patch<Record<string, unknown>>(`/admin/coupons/${id}`, payload);
       setCoupons((prev) => prev.map((c) => (c.id === id ? (data.coupon as Coupon) : c)));
       return data.coupon as Coupon;
     } finally {
@@ -94,7 +68,7 @@ export function useCoupons() {
   const deleteCoupon = async (id: string) => {
     setActionLoading(true);
     try {
-      await fetchJson(`/api/admin/coupons/${id}`, { method: "DELETE" });
+      await apiClient.delete(`/admin/coupons/${id}`);
       setCoupons((prev) => prev.filter((c) => c.id !== id));
     } finally {
       setActionLoading(false);
