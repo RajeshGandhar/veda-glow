@@ -93,8 +93,8 @@ export function setAdminSessionCookie(res, token) {
   const maxAgeSeconds = env.ADMIN_SESSION_TTL_HOURS * 60 * 60;
   const cookie = serializeCookie(env.ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "Strict",
+    secure: true, // Always true for production cross-origin
+    sameSite: "None", // Required for cross-origin cookies
     path: "/",
     maxAge: maxAgeSeconds,
   });
@@ -104,8 +104,8 @@ export function setAdminSessionCookie(res, token) {
 export function clearAdminSessionCookie(res) {
   const cookie = serializeCookie(env.ADMIN_COOKIE_NAME, "", {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "Strict",
+    secure: true, // Always true for production cross-origin
+    sameSite: "None", // Required for cross-origin cookies
     path: "/",
     maxAge: 0,
   });
