@@ -1,0 +1,29 @@
+{
+  "name": "veda-glow-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test src/tests/coupon-order-flow.test.js"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.48.0",
+    "@sentry/profiling-node": "^10.49.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "mongoose": "^8.19.2",
+    "morgan": "^1.10.0",
+    "razorpay": "^2.9.6",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

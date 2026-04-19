@@ -1,0 +1,111 @@
+# Production Nginx Configuration for VedaGlow
+# Deploy to /etc/nginx/sites-available/vedaglow or use with Docker
+
+server {
+    listen 80;
+    server_name vedaglows.com www.vedaglows.com;
+    
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name vedaglows.com www.vedaglows.com;
+    
+    # SSL Certificates (Let's Encrypt)
+    ssl_certificate /etc/letsencrypt/live/vedaglows.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/vedaglows.com/privkey.pem;
+    
+    # SSL Configuration (A grade on SSL Labs)
+    ssl_protocols TLSv1.3 TLSv1.2;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    
+    # ========== CRITICAL SECURITY HEADERS ==========
+    
+    # HSTS: Force HTTPS for future visits (6 months)
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
+    # Prevent clickjacking
+    add_header X-Frame-Options "DENY" always;
+    
+    # Prevent MIME-type sniffing
+    add_header X-Content-Type-Options "nosniff" always;
+    
+    # Enable XSS protection (modern CSP preferred)
+    add_header X-XSS-Protection "0" always;
+    
+    # Content Security Policy (strict)
+    add_header Content-Security-Policy "
+        default-src 'self';
+        script-src 'self' https://checkout.razorpay.com https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        font-src 'self' data:;
+        connect-src 'self' https://api.razorpay.com https://www.google-analytics.com;
+        frame-src https://checkout.razorpay.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self' https://checkout.razorpay.com;
+        frame-ancestors 'none';
+    " always;
+    
+    # Referrer policy
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Permissions policy (disable sensors, etc)
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()" always;
+    
+    # ========== CACHING & COMPRESSION ==========
+    
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/javascript application/json;
+    gzip_min_length 1024;
+    
+    # Static assets: long cache
+    location ~* \.(js|css|webp|png|jpg|jpeg|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # HTML: no cache (always revalidate)
+    location ~* \.html$ {
+        expires -1;
+        add_header Cache-Control "public, max-age=0, must-revalidate";
+    }
+    
+    # API routes: no cache, private
+    location /api {
+        proxy_pass http://localhost:5000;
+        add_header Cache-Control "private, no-store";
+    }
+    
+    # Health check endpoint
+    location /api/health {
+        proxy_pass http://localhost:5000;
+        access_log off;
+    }
+    
+    # Frontend SPA: serve index.html for all routes
+    location / {
+        root /var/www/vedaglow/dist;
+        try_files $uri $uri/ /index.html;
+        expires -1;
+        add_header Cache-Control "public, max-age=0, must-revalidate";
+    }
+    
+    # 404 handling
+    error_page 404 /index.html;
+    
+    # Deny access to sensitive files
+    location ~ /\. {
+        deny all;
+    }
+    location ~ ~$ {
+        deny all;
+    }
+}
