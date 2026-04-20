@@ -53,6 +53,35 @@ const allowedOrigins = Array.from(
   new Set([...configuredOrigins, ...devOrigins]),
 );
 
+// Production-ready CORS configuration
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow requests with no origin (like mobile apps, Postman, curl)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      // Block all other origins
+      console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      callback(new Error(`CORS policy: Origin ${origin} is not allowed`));
+    },
+    credentials: true, // Allow cookies and authorization headers
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // Allowed HTTP methods
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"], // Allowed headers
+    exposedHeaders: ["Set-Cookie"], // Headers that client can access
+    maxAge: 86400, // Cache preflight response for 24 hours (in seconds)
+    optionsSuccessStatus: 204, // Success status for preflight requests
+  }),
+);
+
 // Enhanced security headers configuration
 app.use(
   helmet({
@@ -112,18 +141,6 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    credentials: true,
-  }),
-);
 
 // Sentry request handler - captures request context for error tracking
 app.use(sentryRequestHandler);
