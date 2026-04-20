@@ -824,18 +824,31 @@ export function Checkout({
               <div>
                 <div className="flex gap-2">
                   <input
+                    type="text"
                     value={couponInput}
                     onChange={(e) => {
-                      setCouponInput(e.target.value.toUpperCase());
+                      // Don't transform during composition (mobile keyboard prediction)
+                      const value = e.target.value;
+                      setCouponInput(value);
                       if (couponStatus !== "idle") setCouponStatus("idle");
                     }}
+                    onBlur={(e) => {
+                      // Transform to uppercase only on blur (after typing is done)
+                      setCouponInput(e.target.value.toUpperCase());
+                    }}
                     placeholder="Enter coupon code"
-                    className="w-full uppercase rounded-lg border border-neutral-300 px-4 py-2 text-base transition-colors focus:border-veda-green focus:outline-none focus:ring-1 focus:ring-veda-green"
+                    className="w-full rounded-lg border border-neutral-300 px-4 py-2 text-base uppercase transition-colors focus:border-veda-green focus:outline-none focus:ring-1 focus:ring-veda-green"
                     disabled={couponStatus === "loading"}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="characters"
+                    spellCheck="false"
+                    inputMode="text"
+                    maxLength={20}
                   />
                   <button
                     type="button"
-                    onClick={() => validateCoupon(couponInput)}
+                    onClick={() => validateCoupon(couponInput.toUpperCase())}
                     disabled={!couponInput.trim() || couponStatus === "loading"}
                     className="inline-flex min-w-[90px] items-center justify-center rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:opacity-50"
                   >
