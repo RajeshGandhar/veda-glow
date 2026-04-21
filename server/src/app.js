@@ -89,7 +89,13 @@ app.use(
     },
     credentials: true, // Allow cookies and authorization headers
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // Allowed HTTP methods
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"], // Allowed headers
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "X-Order-Access-Token", // Custom header for order access
+      "X-Admin-Session-Token", // Custom header for admin session
+    ],
     exposedHeaders: ["Set-Cookie"], // Headers that client can access
     maxAge: 86400, // Cache preflight response for 24 hours (in seconds)
     optionsSuccessStatus: 204, // Success status for preflight requests
