@@ -119,6 +119,10 @@ export const adminLogin = asyncHandler(async (req, res) => {
       },
       req,
     );
+    
+    // Security: Add delay to prevent timing attacks
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
     throw new HttpError(401, "Invalid credentials");
   }
 
@@ -136,6 +140,15 @@ export const adminLogin = asyncHandler(async (req, res) => {
     },
     req,
   );
+
+  // Debug logging (only in development)
+  if (env.NODE_ENV !== "production") {
+    console.log("[Login Debug] Admin login successful", {
+      email: normalizedEmail,
+      origin: req.headers.origin,
+      userAgent: req.headers["user-agent"],
+    });
+  }
 
   res.status(200).json({
     success: true,

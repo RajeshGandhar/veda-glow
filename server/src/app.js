@@ -54,6 +54,19 @@ const allowedOrigins = Array.from(
   new Set([...configuredOrigins, ...devOrigins]),
 );
 
+// Security validation: Ensure production origins are HTTPS
+if (env.NODE_ENV === "production") {
+  const insecureOrigins = allowedOrigins.filter(
+    (origin) => origin.startsWith("http://") && !origin.includes("localhost")
+  );
+  if (insecureOrigins.length > 0) {
+    console.error("[CORS Security] Production origins must use HTTPS:", insecureOrigins);
+    throw new Error("Production CORS origins must use HTTPS");
+  }
+}
+
+console.log("[CORS] Allowed origins:", allowedOrigins);
+
 // Production-ready CORS configuration
 app.use(
   cors({

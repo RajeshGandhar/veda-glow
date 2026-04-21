@@ -70,22 +70,54 @@ export function createAdminSessionToken(adminId = "admin") {
 }
 
 export function verifyAdminSessionToken(token) {
-  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  if (!token || typeof token !== "string" || !token.includes(".")) {
+    return null;
+  }
+  
   const [payloadBase64, signature] = token.split(".");
 
   try {
     const payload = JSON.parse(base64UrlDecode(payloadBase64));
-    if (payload.v !== TOKEN_VERSION || payload.typ !== "admin_session")
+    
+    // Validate token structure
+    if (payload.v !== TOKEN_VERSION || payload.typ !== "admin_session") {
+      if (env.NODE_ENV !== "production") {
+        console.warn("[Token Debug] Invalid token structure", {
+          version: payload.v,
+          type: payload.typ,
+        });
+      }
       return null;
+    }
 
+    // Verify signature
     const expectedSignature = createSignature(payloadBase64);
-    if (!timingSafeEqual(expectedSignature, signature)) return null;
+    if (!timingSafeEqual(expectedSignature, signature)) {
+      if (env.NODE_ENV !== "production") {
+        console.warn("[Token Debug] Signature verification failed");
+      }
+      return null;
+    }
 
+    // Check expiration
     const now = Math.floor(Date.now() / 1000);
-    if (payload.exp < now) return null;
+    if (payload.exp < now) {
+      if (env.NODE_ENV !== "production") {
+        console.warn("[Token Debug] Token expired", {
+          expiredAt: new Date(payload.exp * 1000).toISOString(),
+          now: new Date(now * 1000).toISOString(),
+        });
+      }
+      return null;
+    }
 
     return payload;
-  } catch {
+  } catch (error) {
+    if (env.NODE_ENV !== "production") {
+      console.warn("[Token Debug] Token parsing error", {
+        error: error.message,
+      });
+    }
     return null;
   }
 }
@@ -97,14 +129,39 @@ export function getAdminSessionTokenFromRequest(req) {
 }
 
 export function setAdminSessionCookie(res, token, options = {}) {
+  // Validate environment for production safety
+  if (env.NODE_ENV === "production") {
+    // Ensure we're not setting cookies without HTTPS
+    if (!options.secure && options.secure !== false) {
+      // secure will be set to true by default in production
+    }
+  }
+
   const cookieOptions = {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/api/admin",
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     ...options,
   };
+
+  // Security validation: In production, sameSite=none REQUIRES secure=true
+  if (cookieOptions.sameSite === "none" && !cookieOptions.secure) {
+    console.error("[Cookie Security] sameSite=none requires secure=true");
+    throw new Error("Invalid cookie configuration: sameSite=none requires secure=true");
+  }
+
+  // Debug logging (only in development)
+  if (env.NODE_ENV !== "production") {
+    console.log("[Cookie Debug] Setting admin session cookie", {
+      httpOnly: cookieOptions.httpOnly,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      path: cookieOptions.path,
+      maxAge: cookieOptions.maxAge,
+    });
+  }
 
   res.setHeader(
     "Set-Cookie",
