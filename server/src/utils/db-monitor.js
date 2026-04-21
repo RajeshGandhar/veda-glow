@@ -52,110 +52,41 @@ export function startPoolMonitoring(intervalMs = 60000, verbose = false) {
       if (monitoringInterval) {
         clearInterval(monitoringInterval);
         monitoringInterval = null;
-        console.log("🛑 Pool monitoring stopped");
+        console.log("🛑 Database pool monitoring stopped");
       }
     },
   };
 }
 
-/**
- * Get current pool metrics
- */
 function getPoolMetrics() {
-  try {
-    const stats = getDatabaseStats();
-    return {
-      connectionState: getConnectionStateName(stats.state),
-      collections: stats.collections,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      connectionState: "error",
-      error: error.message,
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-
-/**
- * Convert connection state number to readable name
- */
-function getConnectionStateName(state) {
-  const states = {
-    0: "disconnected",
-    1: "connected",
-    2: "connecting",
-    3: "disconnecting",
+  const conn = mongoose.connection;
+  return {
+    readyState: conn.readyState,
+    name: conn.name,
+    host: conn.host,
+    port: conn.port,
+    poolSize: conn.db?.serverConfig?.poolSize || 0,
+    connections: {
+      inUse: conn.db?.serverConfig?.connections?.inUse || 0,
+      inPool: conn.db?.serverConfig?.connections?.inPool || 0,
+      pending: conn.db?.serverConfig?.connections?.pending || 0,
+    },
   };
-  return states[state] || "unknown";
 }
 
-/**
- * Log pool status with formatting
- */
 function logPoolStatus(metrics, healthStatus) {
-  const icon = healthStatus.ok ? "✅" : "❌";
-  const status = metrics.connectionState.toUpperCase();
-
+  const status = healthStatus.healthy ? "✅" : "❌";
   console.log(
-    `${icon} [${metrics.timestamp}] DB: ${status} (${healthStatus.message})`,
+    `${status} DB Pool: ${metrics.connections.inUse}/${metrics.poolSize} connections | Pending: ${metrics.connections.pending} | State: ${getReadyStateLabel(metrics.readyState)}`,
   );
+}
 
-  if (!healthStatus.ok) {
-    console.warn(`   Error: ${healthStatus.message}`);
+function getReadyStateLabel(state) {
+  switch (state) {
+    case 0: return "disconnected";
+    case 1: return "connected";
+    case 2: return "connecting";
+    case 3: return "disconnecting";
+    default: return "unknown";
   }
 }
-
-/**
- * Get detailed pool information
- */
-export function getPoolInfo() {
-  try {
-    const stats = getDatabaseStats();
-    const db = mongoose.connection;
-
-    return {
-      status: getConnectionStateName(stats.state),
-      database: stats.database,
-      host: stats.host,
-      collections: stats.collections,
-      poolSize: stats.poolSize,
-      availableConnections: stats.availableConnections,
-      uptime: Math.round(process.uptime()),
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      status: "error",
-      error: error.message,
-    };
-  }
-}
-
-/**
- * Create middleware for pool health monitoring
- * Logs connection stats with each request (useful for development)
- */
-export function poolMonitoringMiddleware(req, res, next) {
-  // Add pool stats to response headers (for debugging)
-  const info = getPoolInfo();
-
-  res.set("X-DB-Status", info.status);
-  res.set("X-DB-Collections", info.collections);
-
-  // Log on errors
-  res.on("finish", () => {
-    if (res.statusCode >= 500 && info.status !== "connected") {
-      console.warn(`⚠️  500 error with DB status: ${info.status}`);
-    }
-  });
-
-  next();
-}
-
-export default {
-  startPoolMonitoring,
-  getPoolInfo,
-  poolMonitoringMiddleware,
-};

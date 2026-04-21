@@ -14,6 +14,7 @@ import couponRoutes from "./routes/coupon.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import { getGaugeValue, getMetricSnapshot } from "./utils/observability.js";
 
 const app = express();
 
@@ -203,13 +204,46 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/health", (_req, res) => {
+app.get("/api/health", async (_req, res) => {
   const dbReady = mongoose.connection.readyState === 1;
-  const statusCode = dbReady ? 200 : 503;
+  let queueStats = null;
+  let queueReady = true;
+
+  // Only check queue stats if Redis-dependent features are enabled
+  if (env.ENABLE_EMBEDDED_PAYMENT_WORKER || env.ENABLE_RECONCILIATION_JOB) {
+    try {
+      const { getQueueStats } = await import("./queue/paymentWebhook.queue.js");
+      queueStats = await getQueueStats();
+    } catch {
+      queueReady = false;
+    }
+  }
+
+  const overallOk = dbReady && queueReady;
+  const statusCode = overallOk ? 200 : 503;
+  const metricSnapshot = getMetricSnapshot();
 
   res.status(statusCode).json({
-    status: dbReady ? "ok" : "degraded",
+    status: overallOk ? "ok" : "degraded",
     database: dbReady ? "connected" : "disconnected",
+    queue: queueReady ? "connected" : "disabled",
+    worker: {
+      mode: env.ENABLE_EMBEDDED_PAYMENT_WORKER ? "embedded" : "disabled",
+      activeJobs: queueStats?.main?.active ?? null,
+    },
+    metrics: {
+      webhook_received: metricSnapshot.totals.webhook_received,
+      webhook_processed: metricSnapshot.totals.webhook_processed,
+      webhook_failed: metricSnapshot.totals.webhook_failed,
+      retry_count: metricSnapshot.totals.retry_count,
+      dlq_size:
+        metricSnapshot.totals.dlq_size ||
+        ((queueStats?.dlq?.waiting || 0) +
+          (queueStats?.dlq?.active || 0) +
+          (queueStats?.dlq?.delayed || 0)),
+      stuck_orders_count: getGaugeValue("stuck_orders_count"),
+    },
+    queueStats,
     uptimeSeconds: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
   });

@@ -11,6 +11,7 @@ const ORDER_STATUSES = [
 ];
 const PAYMENT_STATUSES = [
   "pending",
+  "processing",
   "created",
   "partially_paid",
   "paid",
@@ -132,22 +133,6 @@ export const createOrderSchema = z
         .max(32)
         .regex(/^[a-zA-Z0-9_-]+$/, "Coupon code format is invalid."),
     ).optional(),
-  })
-  .strict();
-
-export const verifyPaymentSchema = z
-  .object({
-    razorpayOrderId: sanitizeString(
-      z.string().regex(/^order_[a-zA-Z0-9]+$/, "Invalid Razorpay order ID."),
-    ),
-    razorpayPaymentId: sanitizeString(
-      z.string().regex(/^pay_[a-zA-Z0-9]+$/, "Invalid Razorpay payment ID."),
-    ),
-    razorpaySignature: sanitizeString(
-      z
-        .string()
-        .regex(/^[a-fA-F0-9]{64}$/, "Invalid Razorpay signature format."),
-    ),
   })
   .strict();
 

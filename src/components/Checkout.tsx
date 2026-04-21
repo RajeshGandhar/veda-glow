@@ -271,6 +271,7 @@ export function Checkout({
   const [backendOrder, setBackendOrder] = useState<{
     orderId: string;
     orderNumber: number | null;
+    orderAccessToken: string;
     razorpayKeyId: string;
     razorpayOrderId: string;
     amount: number;
@@ -278,6 +279,7 @@ export function Checkout({
   } | null>(null);
   const [orderCreating, setOrderCreating] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
 
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -356,13 +358,13 @@ export function Checkout({
   useEffect(() => {
     // Generate NEW idempotency key for fresh order
     idempotencyKeyRef.current = crypto.randomUUID();
-    
+
     // Clear all payment state to force new order creation
     setBackendOrder(null);
     setRazorpayResult(null);
     setCodAdvanceResult(null);
     setOrderError("");
-    
+
     // Revalidate coupon with new cart total
     if (appliedCoupon && step === "address") {
       validateCoupon(appliedCoupon.code);
@@ -377,20 +379,20 @@ export function Checkout({
     if (step === "payment" && !backendOrder && !orderCreating) {
       // Generate fresh idempotency key
       idempotencyKeyRef.current = crypto.randomUUID();
-      
+
       // Create order with current payment method
       createBackendOrder(paymentMethod === "cod" ? "cod" : "razorpay");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, paymentMethod]);
-  
+
   // ============================================================================
   // FIX: Recreate order when payment method changes
   // ============================================================================
   useEffect(() => {
     if (step === "payment" && backendOrder) {
       const currentPaymentType = paymentMethod === "cod" ? "cod" : "razorpay";
-      
+
       // Check if payment type changed
       if (backendOrder.orderId) {
         // Clear backend order and recreate
@@ -398,16 +400,74 @@ export function Checkout({
         setRazorpayResult(null);
         setCodAdvanceResult(null);
         setOrderError("");
-        
+
         // Generate fresh idempotency key
         idempotencyKeyRef.current = crypto.randomUUID();
-        
+
         // Create new order with correct payment type
         createBackendOrder(currentPaymentType);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod]);
+
+  // ============================================================================
+  // POLL ORDER STATUS AFTER PAYMENT PROCESSING
+  // ============================================================================
+  useEffect(() => {
+    if (
+      step === "submitted" &&
+      (razorpayResult?.status === "processing" ||
+        codAdvanceResult?.status === "processing") &&
+      backendOrder
+    ) {
+      const pollOrderStatus = async () => {
+        try {
+          const res = await fetch(
+            `${API_URL}/orders/${idempotencyKeyRef.current}`,
+            {
+              credentials: "include",
+              headers: backendOrder?.orderAccessToken
+                ? { "x-order-access-token": backendOrder.orderAccessToken }
+                : undefined,
+            },
+          );
+          const data = await res.json();
+          if (res.ok && data.order) {
+            const status = data.order.paymentStatus;
+            setOrderStatus(status);
+            if (status === "paid") {
+              // Payment confirmed, stop polling
+              return;
+            } else if (status === "failed") {
+              // Payment failed
+              setOrderError("Payment verification failed. Please try again.");
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("Error polling order status:", err);
+        }
+      };
+
+      // Poll immediately, then every 2 seconds for up to 30 seconds
+      pollOrderStatus();
+      const interval = setInterval(pollOrderStatus, 2000);
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        if (orderStatus !== "paid") {
+          setOrderError(
+            "Payment verification timed out. Please contact support.",
+          );
+        }
+      }, 30000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [step, razorpayResult, codAdvanceResult, backendOrder, orderStatus]);
 
   const totalAmount = useMemo(
     () =>
@@ -472,7 +532,7 @@ export function Checkout({
   const createBackendOrder = async (paymentType: "cod" | "razorpay") => {
     setOrderCreating(true);
     setOrderError("");
-    
+
     // ============================================================================
     // FIX: Always create NEW order with current cart state
     // ============================================================================
@@ -496,7 +556,7 @@ export function Checkout({
       idempotencyKey: idempotencyKeyRef.current,
       couponCode: appliedCoupon?.code,
     };
-    
+
     try {
       const res = await fetch(`${API_URL}/orders`, {
         method: "POST",
@@ -521,6 +581,7 @@ export function Checkout({
         setBackendOrder({
           orderId: data.order.id,
           orderNumber: data.order.orderNumber ?? null,
+          orderAccessToken: data.orderAccessToken ?? "",
           razorpayKeyId: data.razorpay.keyId,
           razorpayOrderId: data.razorpay.orderId,
           amount: data.razorpay.amount, // Already in RUPEES from backend
@@ -531,6 +592,7 @@ export function Checkout({
         setBackendOrder({
           orderId: data.order.id,
           orderNumber: data.order.orderNumber ?? null,
+          orderAccessToken: data.orderAccessToken ?? "",
           razorpayKeyId: "",
           razorpayOrderId: "",
           amount: 0,
@@ -594,19 +656,19 @@ export function Checkout({
 
   const handleProceedToPayment = async () => {
     if (!canProceed || !validateAddress()) return;
-    
+
     // ============================================================================
     // FIX: Don't create order yet - just move to payment screen
     // ============================================================================
     // Order will be created when user clicks the actual payment button
     // This ensures the correct payment type is used
-    
+
     // Clear previous payment state
     setRazorpayResult(null);
     setCodAdvanceResult(null);
     setBackendOrder(null);
     setOrderError("");
-    
+
     // Move to payment screen
     setStep("payment");
   };
@@ -1105,7 +1167,8 @@ export function Checkout({
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-neutral-600">
-                    Pay full amount (₹{totalAmount}) via Card, UPI, or Netbanking
+                    Pay full amount (₹{totalAmount}) via Card, UPI, or
+                    Netbanking
                   </p>
                   <div className="mt-2 flex items-center gap-4 text-xs text-neutral-500">
                     <span className="flex items-center gap-1">
@@ -1231,7 +1294,6 @@ export function Checkout({
 
                 {codAdvanceResult?.status !== "success" && backendOrder && (
                   <RazorpayButton
-                    amount={COD_ADVANCE}
                     customerName={form.name}
                     customerPhone={form.phone}
                     customerEmail={form.email}
@@ -1239,7 +1301,10 @@ export function Checkout({
                     backendOrder={backendOrder}
                     onResult={(result) => {
                       setCodAdvanceResult(result);
-                      if (result.status === "success") {
+                      if (
+                        result.status === "success" ||
+                        result.status === "processing"
+                      ) {
                         setStep("submitted");
                       }
                     }}
@@ -1387,14 +1452,16 @@ export function Checkout({
 
                 {razorpayResult?.status !== "success" && backendOrder && (
                   <RazorpayButton
-                    amount={totalAmount}
                     customerName={form.name}
                     customerPhone={form.phone}
                     customerEmail={form.email}
                     backendOrder={backendOrder}
                     onResult={(result) => {
                       setRazorpayResult(result);
-                      if (result.status === "success") {
+                      if (
+                        result.status === "success" ||
+                        result.status === "processing"
+                      ) {
                         setStep("submitted");
                       }
                     }}
@@ -1424,15 +1491,44 @@ export function Checkout({
 
       {/* ── SUBMITTED ── */}
       {step === "submitted" && (
-        <OrderSuccess
-          name={form.name}
-          orderId={backendOrder?.orderId ?? ""}
-          orderNumber={backendOrder?.orderNumber ?? null}
-          amount={totalAmount}
-          paymentMethod={isCod ? "cod" : "razorpay"}
-          remainingOnDelivery={remainingOnDelivery}
-          onGoHome={onPlaceOrder}
-        />
+        <>
+          {(razorpayResult?.status === "processing" ||
+            codAdvanceResult?.status === "processing") &&
+          orderStatus !== "paid" ? (
+            <div className="min-h-[400px] flex flex-col items-center justify-center">
+              <div className="rounded-3xl bg-white shadow-xl shadow-emerald-100 border border-emerald-100 overflow-hidden max-w-md w-full">
+                <div className="h-2 bg-gradient-to-r from-emerald-400 to-teal-500" />
+                <div className="px-6 py-8 sm:px-8 text-center">
+                  <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600 mb-4" />
+                  <h2 className="text-2xl font-bold text-veda-green mb-2">
+                    Processing Payment
+                  </h2>
+                  <p className="text-neutral-600 mb-4">
+                    Please wait while we verify your payment. This may take a
+                    few seconds.
+                  </p>
+                  {orderError && (
+                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                      <p className="text-sm font-semibold text-red-700">
+                        {orderError}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <OrderSuccess
+              name={form.name}
+              orderId={backendOrder?.orderId ?? ""}
+              orderNumber={backendOrder?.orderNumber ?? null}
+              amount={totalAmount}
+              paymentMethod={isCod ? "cod" : "razorpay"}
+              remainingOnDelivery={remainingOnDelivery}
+              onGoHome={onPlaceOrder}
+            />
+          )}
+        </>
       )}
     </div>
   );

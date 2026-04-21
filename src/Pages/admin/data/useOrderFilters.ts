@@ -35,7 +35,7 @@ export function useOrderFilters(orders: Order[]) {
       const paymentMethod = order.paymentMethod.toLowerCase();
       const paymentStatus = order.paymentStatus.toLowerCase();
       const isCod = paymentMethod === "cod";
-      const isPaid = paymentStatus === "paid" || paymentMethod === "online" || paymentMethod === "razorpay";
+      const isPaid = paymentStatus === "paid";
       const matchesPayment =
         paymentFilter === "all" ||
         (paymentFilter === "cod" && isCod) ||

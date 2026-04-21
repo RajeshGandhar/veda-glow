@@ -47,12 +47,6 @@ export const createOrderLimiter = buildLimiter(
   "Too many order attempts from this IP. Please try again in a few minutes.",
 );
 
-export const verifyPaymentLimiter = buildLimiter(
-  15 * 60 * 1000,
-  60,
-  "Too many payment verification attempts. Please retry shortly.",
-);
-
 export const couponValidationLimiter = buildLimiter(
   15 * 60 * 1000,
   120,

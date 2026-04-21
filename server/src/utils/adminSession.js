@@ -54,14 +54,14 @@ function parseCookies(cookieHeader = "") {
   return result;
 }
 
-export function createAdminSessionToken() {
+export function createAdminSessionToken(adminId = "admin") {
   const nowSeconds = Math.floor(Date.now() / 1000);
-  const expiresAtSeconds = nowSeconds + env.ADMIN_SESSION_TTL_HOURS * 60 * 60;
   const payload = {
     v: TOKEN_VERSION,
-    role: "admin",
+    typ: "admin_session",
+    sub: adminId,
     iat: nowSeconds,
-    exp: expiresAtSeconds,
+    exp: nowSeconds + 24 * 60 * 60, // 24 hours
     nonce: crypto.randomUUID(),
   };
   const payloadBase64 = base64UrlEncode(JSON.stringify(payload));
@@ -71,48 +71,47 @@ export function createAdminSessionToken() {
 
 export function verifyAdminSessionToken(token) {
   if (!token || typeof token !== "string" || !token.includes(".")) return null;
-
   const [payloadBase64, signature] = token.split(".");
-  if (!payloadBase64 || !signature) return null;
-
-  const expectedSignature = createSignature(payloadBase64);
-  if (!timingSafeEqual(signature, expectedSignature)) return null;
 
   try {
     const payload = JSON.parse(base64UrlDecode(payloadBase64));
-    if (payload.role !== "admin") return null;
-    if (typeof payload.exp !== "number") return null;
-    if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
+    if (payload.v !== TOKEN_VERSION || payload.typ !== "admin_session")
+      return null;
+
+    const expectedSignature = createSignature(payloadBase64);
+    if (!timingSafeEqual(expectedSignature, signature)) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp < now) return null;
+
     return payload;
   } catch {
     return null;
   }
 }
 
-export function setAdminSessionCookie(res, token) {
-  const maxAgeSeconds = env.ADMIN_SESSION_TTL_HOURS * 60 * 60;
-  const cookie = serializeCookie(env.ADMIN_COOKIE_NAME, token, {
+export function getAdminSessionTokenFromRequest(req) {
+  // Check cookie first, then header
+  const cookies = parseCookies(req.get("cookie"));
+  return cookies.admin_session || req.get("x-admin-session-token");
+}
+
+export function setAdminSessionCookie(res, token, options = {}) {
+  const cookieOptions = {
     httpOnly: true,
-    secure: true, // Always true for production cross-origin
-    sameSite: "None", // Required for cross-origin cookies
-    path: "/",
-    maxAge: maxAgeSeconds,
-  });
-  res.setHeader("Set-Cookie", cookie);
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/api/admin",
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    ...options,
+  };
+
+  res.setHeader(
+    "Set-Cookie",
+    serializeCookie("admin_session", token, cookieOptions),
+  );
 }
 
 export function clearAdminSessionCookie(res) {
-  const cookie = serializeCookie(env.ADMIN_COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: true, // Always true for production cross-origin
-    sameSite: "None", // Required for cross-origin cookies
-    path: "/",
-    maxAge: 0,
-  });
-  res.setHeader("Set-Cookie", cookie);
-}
-
-export function getAdminSessionTokenFromRequest(req) {
-  const cookies = parseCookies(req.headers?.cookie || "");
-  return cookies[env.ADMIN_COOKIE_NAME] || "";
+  setAdminSessionCookie(res, "", { maxAge: 0 });
 }

@@ -43,8 +43,37 @@ const webhookEventSchema = new mongoose.Schema(
     },
     processingStatus: {
       type: String,
-      enum: ["received", "applied", "ignored", "conflict", "duplicate"],
+      enum: [
+        "received",
+        "processing",
+        "applied",
+        "conflict",
+        "retryable_ignored",
+        "final_ignored",
+        "failed",
+      ],
       default: "received",
+      index: true,
+    },
+    processingAttempts: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lockOwner: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    lockExpiresAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    correlationId: {
+      type: String,
+      default: "",
+      trim: true,
       index: true,
     },
     processingNote: {
@@ -52,6 +81,12 @@ const webhookEventSchema = new mongoose.Schema(
       default: "",
       trim: true,
       maxlength: 500,
+    },
+    lastErrorCode: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 64,
     },
   },
   {

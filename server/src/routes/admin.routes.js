@@ -3,8 +3,12 @@ import {
   adminLogin,
   adminLogout,
   adminMe,
+  adminMetrics,
   listAdminOrders,
+  replayDlqEvent,
   updateAdminOrderStatus,
+  getAutoRecoveryStatus,
+  triggerRecovery,
 } from "../controllers/admin.controller.js";
 import {
   listCoupons,
@@ -29,6 +33,8 @@ router.get("/me", requireAdminAuth, adminMe);
 
 // Orders
 router.get("/orders", requireAdminAuth, adminReadLimiter, listAdminOrders);
+router.get("/metrics", requireAdminAuth, adminReadLimiter, adminMetrics);
+router.post("/dlq/replay", requireAdminAuth, adminWriteLimiter, replayDlqEvent);
 router.patch(
   "/orders/:id/status",
   requireAdminAuth,
@@ -52,5 +58,9 @@ router.get(
   adminReadLimiter,
   listCouponUsages,
 );
+
+// Auto-Recovery
+router.get("/recovery/status", requireAdminAuth, adminReadLimiter, getAutoRecoveryStatus);
+router.post("/recovery/trigger", requireAdminAuth, adminWriteLimiter, triggerRecovery);
 
 export default router;

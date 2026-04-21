@@ -15,6 +15,21 @@ import {
   adminLoginSchema,
   updateAdminOrderStatusSchema,
 } from "../validations/admin.validation.js";
+import {
+  getLogSummary,
+  getMetricSnapshot,
+  getRecentLogs,
+} from "../utils/observability.js";
+import {
+  getQueueStats,
+  inspectDlqJobs,
+  retryDlqJob,
+} from "../queue/paymentWebhook.queue.js";
+import { getStuckOrders } from "../services/paymentReconciliation.service.js";
+import {
+  getRecoveryStatus,
+  triggerManualRecovery,
+} from "../services/autoRecovery.service.js";
 
 function serializeOrderForAdmin(order) {
   return {
@@ -261,5 +276,81 @@ export const updateAdminOrderStatus = asyncHandler(async (req, res) => {
     success: true,
     message: "Order status updated.",
     order: serializeOrderForAdmin(updated),
+  });
+});
+
+export const adminMetrics = asyncHandler(async (req, res) => {
+  const [queueStats, stuckOrders, dlqJobs] = await Promise.all([
+    getQueueStats(),
+    getStuckOrders({ limit: 25 }),
+    inspectDlqJobs({ limit: 25 }),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    metrics: getMetricSnapshot(),
+    queue: queueStats,
+    stuckOrders,
+    dlq: {
+      count:
+        (queueStats?.dlq?.waiting || 0) +
+        (queueStats?.dlq?.active || 0) +
+        (queueStats?.dlq?.delayed || 0),
+      jobs: dlqJobs,
+    },
+    logs: {
+      summary: getLogSummary(),
+      recent: getRecentLogs({ limit: 100 }),
+    },
+  });
+});
+
+export const replayDlqEvent = asyncHandler(async (req, res) => {
+  const { dlqJobId } = req.body || {};
+  if (!dlqJobId || typeof dlqJobId !== "string") {
+    throw new HttpError(400, "dlqJobId is required.");
+  }
+
+  await retryDlqJob(dlqJobId);
+
+  res.status(200).json({
+    success: true,
+    message: "DLQ job replayed.",
+    dlqJobId,
+  });
+});
+
+
+// ============================================================================
+// AUTO-RECOVERY ENDPOINTS
+// ============================================================================
+
+/**
+ * Get auto-recovery system status
+ */
+export const getAutoRecoveryStatus = asyncHandler(async (req, res) => {
+  const status = getRecoveryStatus();
+
+  res.status(200).json({
+    success: true,
+    autoRecovery: status,
+  });
+});
+
+/**
+ * Manually trigger recovery (for testing/emergency)
+ */
+export const triggerRecovery = asyncHandler(async (req, res) => {
+  logStructured("info", "admin_triggered_manual_recovery", {
+    admin: req.admin?.role || "admin",
+    ip: req.ip,
+  });
+
+  const results = await triggerManualRecovery();
+
+  res.status(200).json({
+    success: true,
+    message: "Manual recovery triggered",
+    results,
   });
 });

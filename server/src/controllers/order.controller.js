@@ -1,11 +1,9 @@
-import crypto from "crypto";
 import mongoose from "mongoose";
 import Coupon from "../models/Coupon.js";
 import CouponUsage from "../models/CouponUsage.js";
 import { getNextSequence } from "../models/Counter.js";
 import Order from "../models/Order.js";
 import { env } from "../config/env.js";
-import { razorpayClient } from "../config/razorpay.js";
 import {
   calculateCouponDiscount,
   normalizeCouponCode,
@@ -14,10 +12,8 @@ import {
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { HttpError } from "../utils/httpError.js";
 import { getDiscountedAmount, normalizeItems } from "../utils/pricing.js";
-import {
-  createOrderSchema,
-  verifyPaymentSchema,
-} from "../validations/order.validation.js";
+import { createOrderAccessToken } from "../utils/orderAccess.js";
+import { createOrderSchema } from "../validations/order.validation.js";
 
 const COD_CONFIRMATION_AMOUNT = 39;
 
@@ -131,7 +127,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   // - Customer pays ₹260 to delivery person
   if (paymentType === "cod") {
     const codAmountPaise = Math.round(COD_CONFIRMATION_AMOUNT * 100);
-    
+
     const razorpayOrder = await razorpayClient.orders.create({
       amount: codAmountPaise, // Only ₹39 charged upfront
       currency: "INR",
@@ -150,7 +146,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     try {
       order = await Order.create({
         ...baseOrder,
-        paymentStatus: "created", // Will become "partially_paid" after ₹39 payment
+        paymentStatus: "pending",
         orderStatus: "pending", // Will become "confirmed" after ₹39 payment
         razorpayOrderId: razorpayOrder.id,
         // Initial state: no payment received yet
@@ -195,7 +191,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       ...baseOrder,
       advanceAmount: amount,
       balanceDue: 0,
-      paymentStatus: "created",
+      paymentStatus: "pending",
       orderStatus: "pending",
       razorpayOrderId: razorpayOrder.id,
     });
@@ -219,102 +215,34 @@ export const createOrder = asyncHandler(async (req, res) => {
   res.status(201).json(buildCreateOrderResponse(order));
 });
 
-export const verifyOrderPayment = asyncHandler(async (req, res) => {
-  const parsed = verifyPaymentSchema.safeParse(req.body);
+export const getOrder = asyncHandler(async (req, res) => {
+  const { idempotencyKey } = req.params;
 
-  if (!parsed.success) {
-    throw new HttpError(
-      400,
-      "Invalid payment verification payload.",
-      parsed.error.flatten(),
-    );
-  }
-
-  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = parsed.data;
-  const idempotencyKey = req.params.idempotencyKey;
-
-  // SECURITY FIX: Verify signature BEFORE attempting any database queries
-  const expectedSignature = crypto
-    .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-    .digest("hex");
-
-  if (expectedSignature !== razorpaySignature) {
-    throw new HttpError(400, "Invalid payment signature.");
-  }
-
-  // SECURITY FIX: Lookup by idempotencyKey instead of MongoDB _id
-  // This prevents ID enumeration attacks
   const order = await Order.findOne({ idempotencyKey });
 
   if (!order) {
     throw new HttpError(404, "Order not found.");
   }
 
-  if (order.paymentType !== "razorpay" && order.paymentType !== "cod") {
-    throw new HttpError(
-      400,
-      "Only online and COD confirmation orders can be verified.",
-    );
-  }
-
-  if (order.razorpayOrderId !== razorpayOrderId) {
-    throw new HttpError(400, "Razorpay order ID does not match this order.");
-  }
-
-  // ============================================================================
-  // PAYMENT VERIFICATION LOGIC
-  // ============================================================================
-  // COD: Customer paid ₹39 confirmation → mark as "partially_paid"
-  //      Remaining amount (order.amount - ₹39) will be collected on delivery
-  //
-  // Prepaid: Customer paid full amount → mark as "paid"
-  //          No balance due
-  const nextFields =
-    order.paymentType === "cod"
-      ? {
-          paymentStatus: "partially_paid", // ₹39 paid, rest on delivery
-          orderStatus: "confirmed",
-          razorpayPaymentId,
-          advanceAmount: COD_CONFIRMATION_AMOUNT, // ₹39
-          balanceDue: Math.max(order.amount - COD_CONFIRMATION_AMOUNT, 0), // Total - ₹39
-        }
-      : {
-          paymentStatus: "paid", // Full amount paid
-          orderStatus: "confirmed",
-          razorpayPaymentId,
-          advanceAmount: order.amount, // Full amount
-          balanceDue: 0, // Nothing due
-        };
-
-  // Atomic conditional update - only succeeds if state hasn't changed
-  const updatedOrder = await Order.findOneAndUpdate(
-    {
-      _id: order._id,
-      razorpayOrderId,
-      paymentStatus: { $nin: ["paid", "partially_paid"] },
-      version: order.version,
-    },
-    { $set: nextFields, $inc: { version: 1 } },
-    { new: true },
-  );
-
-  if (!updatedOrder) {
-    // Order already processed (likely by webhook), return current state
-    const currentOrder = await Order.findOne({ idempotencyKey });
-    if (!currentOrder) {
-      throw new HttpError(404, "Order not found.");
-    }
-    res.status(200).json({
-      order: serializeOrder(currentOrder),
-    });
-    return;
-  }
-
   res.status(200).json({
-    order: serializeOrder(updatedOrder),
+    order: serializeOrderPublic(order),
   });
 });
+
+function serializeOrderPublic(order) {
+  return {
+    id: order._id.toString(),
+    orderNumber: order.orderNumber ?? null,
+    amount: order.amount,
+    advanceAmount: order.advanceAmount,
+    balanceDue: order.balanceDue,
+    paymentType: order.paymentType,
+    paymentStatus: order.paymentStatus,
+    orderStatus: order.orderStatus,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+  };
+}
 
 function serializeOrder(order) {
   return {
@@ -463,8 +391,10 @@ async function trackCouponUsage(order, coupon, customer, pricing) {
 }
 
 function buildCreateOrderResponse(order) {
+  const orderAccessToken = createOrderAccessToken(order.idempotencyKey);
   const response = {
     order: serializeOrder(order),
+    orderAccessToken,
   };
 
   if (!order.razorpayOrderId) {
