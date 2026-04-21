@@ -6,18 +6,13 @@ const API_URL = (import.meta.env.VITE_API_URL as string) || "/api";
 export type RazorpayPaymentResult =
   | { status: "success"; paymentId: string; orderId: string; signature: string }
   | { status: "failed"; reason: string }
-  | { status: "dismissed" }
-  | {
-      status: "processing";
-      paymentId: string;
-      orderId: string;
-      signature: string;
-    };
+  | { status: "dismissed" };
 
 interface Props {
   /** Pre-created backend order (required) */
   backendOrder: {
     orderId: string;
+    idempotencyKey: string;
     orderAccessToken: string;
     razorpayKeyId: string;
     razorpayOrderId: string;
@@ -51,43 +46,55 @@ export function RazorpayButton({
     razorpay_payment_id: string,
     razorpay_signature: string,
   ) => {
+    console.log("[RAZORPAY] 🔍 verifyPayment function called", {
+      razorpay_order_id,
+      razorpay_payment_id,
+      hasSignature: !!razorpay_signature,
+      idempotencyKey: backendOrder.idempotencyKey,
+      hasAccessToken: !!backendOrder.orderAccessToken,
+    });
+
     try {
-      console.log("[RAZORPAY] Verifying payment", {
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id,
+      const url = `${API_URL}/orders/${backendOrder.idempotencyKey}/verify`;
+      console.log("[RAZORPAY] 📡 Making verification request to:", url);
+      console.log("[RAZORPAY] 📦 Request payload:", {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature: razorpay_signature.substring(0, 10) + "...",
       });
 
-      // Extract idempotencyKey from backendOrder.orderId
-      // The orderId is the MongoDB _id, but we need the idempotencyKey
-      // We'll use the razorpay_order_id to find the order
-      const response = await fetch(
-        `${API_URL}/orders/${backendOrder.orderId}/verify`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Order-Access-Token": backendOrder.orderAccessToken,
-          },
-          body: JSON.stringify({
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-          }),
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Order-Access-Token": backendOrder.orderAccessToken,
         },
-      );
+        body: JSON.stringify({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+        }),
+      });
+
+      console.log("[RAZORPAY] 📨 Response received", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
 
       const data = await response.json();
+      console.log("[RAZORPAY] 📄 Response data:", data);
 
       if (!response.ok) {
-        console.error("[RAZORPAY] Verification failed", {
+        console.error("[RAZORPAY] ❌ Verification failed", {
           status: response.status,
           error: data.message,
         });
         throw new Error(data.message || "Payment verification failed");
       }
 
-      console.log("[RAZORPAY] Verification successful", data);
+      console.log("[RAZORPAY] ✅ Verification successful!");
 
       return {
         status: "success" as const,
@@ -96,7 +103,12 @@ export function RazorpayButton({
         signature: razorpay_signature,
       };
     } catch (error) {
-      console.error("[RAZORPAY] Verification error", error);
+      console.error("[RAZORPAY] ❌ Verification error:", error);
+      console.error("[RAZORPAY] Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   };
@@ -106,6 +118,12 @@ export function RazorpayButton({
     rzpOrderId: string,
     amountPaise: number,
   ) => {
+    console.log("[RAZORPAY] Creating Razorpay options", {
+      keyId,
+      rzpOrderId,
+      amountPaise,
+    });
+
     const options: RazorpayOptions = {
       key: keyId,
       amount: amountPaise,
@@ -122,35 +140,35 @@ export function RazorpayButton({
       modal: {
         escape: false,
         ondismiss: () => {
+          console.log("[RAZORPAY] Modal dismissed by user");
           setOpening(false);
           onResult({ status: "dismissed" });
         },
       },
       handler: async (response: any) => {
-        console.log("[RAZORPAY] Payment handler called", {
+        console.log("[RAZORPAY] ✅ Payment handler called", {
+          hasPaymentId: !!response.razorpay_payment_id,
+          hasOrderId: !!response.razorpay_order_id,
+          hasSignature: !!response.razorpay_signature,
           paymentId: response.razorpay_payment_id,
           orderId: response.razorpay_order_id,
         });
 
-        // First, notify parent that payment is processing
-        onResult({
-          status: "processing",
-          paymentId: response.razorpay_payment_id as string,
-          orderId: response.razorpay_order_id as string,
-          signature: response.razorpay_signature as string,
-        });
-
-        // Then verify payment with backend
+        // Verify payment IMMEDIATELY - don't notify parent yet
         try {
+          console.log("[RAZORPAY] 🔄 Starting verification...");
+          
           const result = await verifyPayment(
             response.razorpay_order_id,
             response.razorpay_payment_id,
             response.razorpay_signature,
           );
 
+          console.log("[RAZORPAY] ✅ Verification complete, notifying parent");
           setOpening(false);
           onResult(result);
         } catch (error) {
+          console.error("[RAZORPAY] ❌ Verification failed", error);
           setOpening(false);
           onResult({
             status: "failed",
@@ -163,14 +181,16 @@ export function RazorpayButton({
       },
     };
 
+    console.log("[RAZORPAY] Creating Razorpay instance");
     const rzp = new window.Razorpay(options);
 
     rzp.on("payment.failed", (response: { error: { description: string } }) => {
-      console.error("[RAZORPAY] Payment failed", response.error);
+      console.error("[RAZORPAY] ❌ Payment failed event", response.error);
       setOpening(false);
       onResult({ status: "failed", reason: response.error.description });
     });
 
+    console.log("[RAZORPAY] Opening Razorpay modal");
     rzp.open();
   };
 

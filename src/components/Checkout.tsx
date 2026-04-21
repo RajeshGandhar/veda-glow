@@ -271,6 +271,7 @@ export function Checkout({
   const [backendOrder, setBackendOrder] = useState<{
     orderId: string;
     orderNumber: number | null;
+    idempotencyKey: string;
     orderAccessToken: string;
     razorpayKeyId: string;
     razorpayOrderId: string;
@@ -411,63 +412,7 @@ export function Checkout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod]);
 
-  // ============================================================================
-  // POLL ORDER STATUS AFTER PAYMENT PROCESSING
-  // ============================================================================
-  useEffect(() => {
-    if (
-      step === "submitted" &&
-      (razorpayResult?.status === "processing" ||
-        codAdvanceResult?.status === "processing") &&
-      backendOrder
-    ) {
-      const pollOrderStatus = async () => {
-        try {
-          const res = await fetch(
-            `${API_URL}/orders/${idempotencyKeyRef.current}`,
-            {
-              credentials: "include",
-              headers: backendOrder?.orderAccessToken
-                ? { "x-order-access-token": backendOrder.orderAccessToken }
-                : undefined,
-            },
-          );
-          const data = await res.json();
-          if (res.ok && data.order) {
-            const status = data.order.paymentStatus;
-            setOrderStatus(status);
-            if (status === "paid") {
-              // Payment confirmed, stop polling
-              return;
-            } else if (status === "failed") {
-              // Payment failed
-              setOrderError("Payment verification failed. Please try again.");
-              return;
-            }
-          }
-        } catch (err) {
-          console.error("Error polling order status:", err);
-        }
-      };
 
-      // Poll immediately, then every 2 seconds for up to 30 seconds
-      pollOrderStatus();
-      const interval = setInterval(pollOrderStatus, 2000);
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        if (orderStatus !== "paid") {
-          setOrderError(
-            "Payment verification timed out. Please contact support.",
-          );
-        }
-      }, 30000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-  }, [step, razorpayResult, codAdvanceResult, backendOrder, orderStatus]);
 
   const totalAmount = useMemo(
     () =>
@@ -581,6 +526,7 @@ export function Checkout({
         setBackendOrder({
           orderId: data.order.id,
           orderNumber: data.order.orderNumber ?? null,
+          idempotencyKey: idempotencyKeyRef.current,
           orderAccessToken: data.orderAccessToken ?? "",
           razorpayKeyId: data.razorpay.keyId,
           razorpayOrderId: data.razorpay.orderId,
@@ -592,6 +538,7 @@ export function Checkout({
         setBackendOrder({
           orderId: data.order.id,
           orderNumber: data.order.orderNumber ?? null,
+          idempotencyKey: idempotencyKeyRef.current,
           orderAccessToken: data.orderAccessToken ?? "",
           razorpayKeyId: "",
           razorpayOrderId: "",
@@ -1301,10 +1248,7 @@ export function Checkout({
                     backendOrder={backendOrder}
                     onResult={(result) => {
                       setCodAdvanceResult(result);
-                      if (
-                        result.status === "success" ||
-                        result.status === "processing"
-                      ) {
+                      if (result.status === "success") {
                         setStep("submitted");
                       }
                     }}
@@ -1458,10 +1402,7 @@ export function Checkout({
                     backendOrder={backendOrder}
                     onResult={(result) => {
                       setRazorpayResult(result);
-                      if (
-                        result.status === "success" ||
-                        result.status === "processing"
-                      ) {
+                      if (result.status === "success") {
                         setStep("submitted");
                       }
                     }}
@@ -1491,44 +1432,15 @@ export function Checkout({
 
       {/* ── SUBMITTED ── */}
       {step === "submitted" && (
-        <>
-          {(razorpayResult?.status === "processing" ||
-            codAdvanceResult?.status === "processing") &&
-          orderStatus !== "paid" ? (
-            <div className="min-h-[400px] flex flex-col items-center justify-center">
-              <div className="rounded-3xl bg-white shadow-xl shadow-emerald-100 border border-emerald-100 overflow-hidden max-w-md w-full">
-                <div className="h-2 bg-gradient-to-r from-emerald-400 to-teal-500" />
-                <div className="px-6 py-8 sm:px-8 text-center">
-                  <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600 mb-4" />
-                  <h2 className="text-2xl font-bold text-veda-green mb-2">
-                    Processing Payment
-                  </h2>
-                  <p className="text-neutral-600 mb-4">
-                    Please wait while we verify your payment. This may take a
-                    few seconds.
-                  </p>
-                  {orderError && (
-                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                      <p className="text-sm font-semibold text-red-700">
-                        {orderError}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <OrderSuccess
-              name={form.name}
-              orderId={backendOrder?.orderId ?? ""}
-              orderNumber={backendOrder?.orderNumber ?? null}
-              amount={totalAmount}
-              paymentMethod={isCod ? "cod" : "razorpay"}
-              remainingOnDelivery={remainingOnDelivery}
-              onGoHome={onPlaceOrder}
-            />
-          )}
-        </>
+        <OrderSuccess
+          name={form.name}
+          orderId={backendOrder?.orderId ?? ""}
+          orderNumber={backendOrder?.orderNumber ?? null}
+          amount={totalAmount}
+          paymentMethod={isCod ? "cod" : "razorpay"}
+          remainingOnDelivery={remainingOnDelivery}
+          onGoHome={onPlaceOrder}
+        />
       )}
     </div>
   );
