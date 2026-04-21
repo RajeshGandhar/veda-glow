@@ -196,27 +196,6 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
-// CSRF validation middleware for state-changing operations
-app.use((req, res, next) => {
-  // Apply CSRF validation to POST, PATCH, DELETE requests
-  if (["POST", "PATCH", "DELETE"].includes(req.method)) {
-    // Verify request origin matches allowed origins
-    const origin = req.get("origin") || req.get("referer");
-    if (origin) {
-      const originUrl = new URL(origin, "http://localhost").origin;
-      const isAllowed = allowedOrigins.some(
-        (o) => new URL(o, "http://localhost").origin === originUrl,
-      );
-      if (!isAllowed) {
-        return res
-          .status(403)
-          .json({ message: "CSRF validation failed: Invalid origin" });
-      }
-    }
-  }
-  next();
-});
-
 app.get("/api/health", async (_req, res) => {
   const dbReady = mongoose.connection.readyState === 1;
   let queueStats = null;

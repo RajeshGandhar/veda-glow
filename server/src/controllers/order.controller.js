@@ -360,6 +360,87 @@ export const getOrder = asyncHandler(async (req, res) => {
   });
 });
 
+export const verifyPayment = asyncHandler(async (req, res) => {
+  console.log("[VERIFY PAYMENT] Request received", {
+    idempotencyKey: req.params.idempotencyKey,
+    body: JSON.stringify(req.body),
+    origin: req.headers.origin,
+  });
+
+  const { idempotencyKey } = req.params;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    console.error("[VERIFY PAYMENT] Missing required fields", {
+      hasOrderId: !!razorpay_order_id,
+      hasPaymentId: !!razorpay_payment_id,
+      hasSignature: !!razorpay_signature,
+    });
+    throw new HttpError(400, "Missing payment verification data");
+  }
+
+  const order = await Order.findOne({ idempotencyKey });
+
+  if (!order) {
+    console.error("[VERIFY PAYMENT] Order not found", { idempotencyKey });
+    throw new HttpError(404, "Order not found");
+  }
+
+  if (order.razorpayOrderId !== razorpay_order_id) {
+    console.error("[VERIFY PAYMENT] Order ID mismatch", {
+      expected: order.razorpayOrderId,
+      received: razorpay_order_id,
+    });
+    throw new HttpError(400, "Order ID mismatch");
+  }
+
+  // Verify signature
+  const crypto = await import("crypto");
+  const expectedSignature = crypto
+    .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (expectedSignature !== razorpay_signature) {
+    console.error("[VERIFY PAYMENT] Signature verification failed", {
+      orderId: order._id.toString(),
+      orderNumber: order.orderNumber,
+    });
+    throw new HttpError(400, "Invalid payment signature");
+  }
+
+  console.log("[VERIFY PAYMENT] Signature verified successfully", {
+    orderId: order._id.toString(),
+    orderNumber: order.orderNumber,
+    razorpayPaymentId: razorpay_payment_id,
+  });
+
+  // Update order status
+  const isCOD = order.paymentType === "cod";
+  const paidAmount = isCOD ? COD_CONFIRMATION_AMOUNT : order.amount;
+
+  order.razorpayPaymentId = razorpay_payment_id;
+  order.paymentStatus = isCOD ? "partially_paid" : "paid";
+  order.orderStatus = "confirmed";
+  order.advanceAmount = paidAmount;
+  order.balanceDue = isCOD ? Math.max(order.amount - COD_CONFIRMATION_AMOUNT, 0) : 0;
+
+  await order.save();
+
+  console.log("[VERIFY PAYMENT] Order updated successfully", {
+    orderId: order._id.toString(),
+    orderNumber: order.orderNumber,
+    paymentStatus: order.paymentStatus,
+    orderStatus: order.orderStatus,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Payment verified successfully",
+    order: serializeOrderPublic(order),
+  });
+});
+
 function serializeOrderPublic(order) {
   return {
     id: order._id.toString(),
