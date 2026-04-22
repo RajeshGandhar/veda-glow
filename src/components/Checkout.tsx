@@ -280,7 +280,6 @@ export function Checkout({
   } | null>(null);
   const [orderCreating, setOrderCreating] = useState(false);
   const [orderError, setOrderError] = useState("");
-  const [orderStatus, setOrderStatus] = useState<string | null>(null);
 
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
