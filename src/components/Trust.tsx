@@ -127,6 +127,7 @@ export function Trust() {
   return (
     <section
       id="trust"
+      aria-label="VedaGlow trust and support — guarantee, delivery, and payment"
       className="relative overflow-hidden bg-[radial-gradient(circle_at_4%_20%,rgba(6,95,70,0.09),transparent_30%),radial-gradient(circle_at_96%_6%,rgba(251,191,36,0.16),transparent_24%),linear-gradient(180deg,#ffffff_0%,#f6faf7_100%)] px-4 py-16 sm:px-8 sm:py-24"
     >
       <div className="pointer-events-none absolute inset-0">
@@ -144,8 +145,7 @@ export function Trust() {
             <span className="block text-emerald-700">quietly presented.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-8 text-neutral-700 sm:text-lg">
-            The essentials you need to feel good about ordering, without loud
-            badges or crowded copy.
+            Everything you need to order with confidence. Nothing you don't.
           </p>
         </div>
 

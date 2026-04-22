@@ -10,6 +10,7 @@ const products = [
     image: dailyCleanImg,
     accent: "#d8eadf",
     step: "Step 1",
+    alt: "VedaGlow Daily Clean — herbal face cleanser for acne-prone and oily skin",
   },
   {
     name: "Glow Repair",
@@ -17,6 +18,7 @@ const products = [
     image: glowRepairImg,
     accent: "#eadfc8",
     step: "Step 2",
+    alt: "VedaGlow Glow Repair — Ayurvedic brightening serum for dull and uneven skin tone",
   },
   {
     name: "Deep Detox",
@@ -24,6 +26,7 @@ const products = [
     image: deepDetoxImg,
     accent: "#e2d3c3",
     step: "Step 3",
+    alt: "VedaGlow Deep Detox — weekly herbal detox mask to clear pores and restore freshness",
   },
 ] as const;
 
@@ -35,6 +38,7 @@ export function Solution({ onAddToCart }: SolutionProps) {
   return (
     <section
       id="solution"
+      aria-label="VedaGlow Kit — 3 Ayurvedic products for clear skin in 28 days"
       className="relative overflow-hidden bg-[linear-gradient(180deg,#f8f4ea_0%,#fefcf7_46%,#ffffff_100%)] px-4 py-14 sm:px-8 sm:py-20 md:py-24"
     >
       <div className="pointer-events-none absolute inset-0">
@@ -45,14 +49,13 @@ export function Solution({ onAddToCart }: SolutionProps) {
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center relative">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[#5d4b2d]">
-            28-day product system
+            Ingredients
           </p>
           <h2 className="mt-4 font-serif text-4xl leading-[1.03] tracking-[-0.04em] text-[#14281f] sm:text-5xl">
-            Three formulas. One clear routine.
+            Natural Herbal Ingredients
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-            Every product has one focused job, so your skin gets steady results
-            without a complicated shelf.
+            Each formula has one job. Your skin gets consistent results without the clutter.
           </p>
 
           <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-xl border border-[#e8dcc8] bg-[#fffaf0] px-3 py-2 text-xs font-semibold text-[#4a3b22] sm:text-sm">
@@ -94,7 +97,7 @@ export function Solution({ onAddToCart }: SolutionProps) {
                 <div className="premium-product-shine" />
                   <img
                     src={product.image}
-                    alt={`VedaGlow ${product.name}`}
+                    alt={product.alt}
                     width={720}
                     height={720}
                     loading="lazy"

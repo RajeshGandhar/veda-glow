@@ -34,8 +34,7 @@ export function CTA({ onAddToCart }: CTAProps) {
             </h2>
 
             <p className="max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-              Minimal routine, premium botanicals, visible weekly progress for acne,
-              oiliness, and dull skin.
+              Three formulas. Weekly progress. Built for acne, oil control, and natural radiance.
             </p>
 
             <div className={`mt-6 inline-flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold sm:text-sm ${

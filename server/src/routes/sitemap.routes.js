@@ -5,33 +5,49 @@ const router = Router();
 // All public frontend routes — add new pages here as the site grows
 const SITE_ROUTES = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/about", changefreq: "monthly", priority: "0.8" },
-  { path: "/contact", changefreq: "monthly", priority: "0.8" },
-  { path: "/login", changefreq: "yearly", priority: "0.3" },
-  { path: "/privacy-policy", changefreq: "yearly", priority: "0.3" },
-  { path: "/cookie-policy", changefreq: "yearly", priority: "0.3" },
-  { path: "/terms-and-conditions", changefreq: "yearly", priority: "0.3" },
-  { path: "/return-and-refund-policy", changefreq: "yearly", priority: "0.3" },
-  { path: "/shipping-policy", changefreq: "yearly", priority: "0.3" },
+  { path: "/privacy-policy", changefreq: "monthly", priority: "0.4" },
+  { path: "/cookie-policy", changefreq: "monthly", priority: "0.4" },
+  { path: "/terms-and-conditions", changefreq: "monthly", priority: "0.4" },
+  { path: "/return-and-refund-policy", changefreq: "monthly", priority: "0.4" },
+  { path: "/shipping-policy", changefreq: "monthly", priority: "0.4" },
 ];
 
 const BASE_URL = "https://vedaglows.com";
 
+const HOMEPAGE_IMAGE = {
+  loc: `${BASE_URL}/og-image.png`,
+  title: "VedaGlow 28-Day Ayurvedic Skin Kit",
+  caption: "Clear acne, control oil, and restore glow with VedaGlow's 3-step herbal routine.",
+};
+
 function buildSitemapXml() {
   const lastmod = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-  const urlEntries = SITE_ROUTES.map(
-    ({ path, changefreq, priority }) => `
+  const urlEntries = SITE_ROUTES.map(({ path, changefreq, priority }) => {
+    const imageBlock =
+      path === "/"
+        ? `
+    <image:image>
+      <image:loc>${HOMEPAGE_IMAGE.loc}</image:loc>
+      <image:title>${HOMEPAGE_IMAGE.title}</image:title>
+      <image:caption>${HOMEPAGE_IMAGE.caption}</image:caption>
+    </image:image>`
+        : "";
+
+    return `
   <url>
     <loc>${BASE_URL}${path}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${changefreq}</changefreq>
-    <priority>${priority}</priority>
-  </url>`,
-  ).join("");
+    <priority>${priority}</priority>${imageBlock}
+  </url>`;
+  }).join("");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+>
 ${urlEntries}
 </urlset>`;
 }

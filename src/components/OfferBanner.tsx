@@ -27,8 +27,7 @@ export function OfferBanner({ onAddToCart }: OfferBannerProps) {
               <span className="block text-[#f8d889]">before this batch closes.</span>
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
-              You get priority dispatch, secure payment, and our satisfaction
-              promise. Once this offer ends, price returns to the regular slab.
+              Priority dispatch. Secure payment. Satisfaction guaranteed. Limited availability at this price.
             </p>
             <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-[#f8d889]/30 bg-[#f8d889]/16 px-4 py-2 text-sm font-semibold text-[#fef0cd]">
               <span className="text-base">Live now:</span>

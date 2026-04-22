@@ -38,6 +38,7 @@ export function Testimonials() {
   return (
     <section
       id="testimonials"
+      aria-label="Customer reviews — VedaGlow results for acne and glowing skin"
       className="relative overflow-hidden bg-[radial-gradient(circle_at_0%_14%,rgba(6,95,70,0.08),transparent_28%),radial-gradient(circle_at_92%_0%,rgba(251,191,36,0.14),transparent_24%),linear-gradient(180deg,#ffffff_0%,#f6faf7_100%)] px-4 py-16 sm:px-8 sm:py-24"
     >
       <div className="pointer-events-none absolute inset-0">
@@ -51,12 +52,10 @@ export function Testimonials() {
             Customer stories
           </p>
           <h2 className="mt-5 font-serif text-4xl tracking-[-0.04em] text-[#0f352a] sm:text-5xl">
-            Results that look
-            <span className="block text-emerald-700">and feel premium.</span>
+            Customer Reviews and Results
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-            Trusted by 7,200+ customers. These stories reflect what consistent,
-            minimal Ayurvedic care can deliver over a 28-day cycle.
+            7,200+ customers. Real results from consistent Ayurvedic care over 28 days.
           </p>
         </div>
 

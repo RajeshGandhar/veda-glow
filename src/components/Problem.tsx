@@ -130,20 +130,19 @@ export function Problem({ onAddToCart }: ProblemProps) {
   return (
     <section
       id="problem"
+      aria-label="Benefits of VedaGlow — natural acne treatment and oil control"
       className="bg-[linear-gradient(180deg,#f6f2ea_0%,#fdfbf8_55%,#ffffff_100%)] px-4 py-14 sm:px-8 sm:py-20 md:py-24"
     >
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-neutral-700">
-            Problem to solution
+            Why VedaGlow
           </p>
           <h2 className="mt-4 font-serif text-4xl tracking-[-0.04em] text-[#14281f] sm:text-5xl">
-            Skin chaos usually starts with
-            <span className="block text-[#2f5d50]">too many products, not too little care.</span>
+            Benefits of Natural Ayurvedic Skincare
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-            VedaGlow simplifies your routine into a calm 3-step flow focused on
-            acne, oil control, and visible glow.
+            VedaGlow replaces chaos with clarity. Three targeted steps. Zero guesswork.
           </p>
         </div>
 

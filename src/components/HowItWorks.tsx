@@ -40,20 +40,19 @@ export function HowItWorks({ onAddToCart }: HowItWorksProps) {
   return (
     <section
       id="how"
+      aria-label="How VedaGlow works — 28-day Ayurvedic skincare routine"
       className="bg-[linear-gradient(180deg,#ffffff_0%,#f8f4ec_100%)] px-4 py-14 sm:px-8 sm:py-20 md:py-24"
     >
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-neutral-700">
-            3-step routine
+            28-Day Skin Routine
           </p>
           <h2 className="mt-4 font-serif text-4xl leading-[1.03] tracking-[-0.04em] text-[#14281f] sm:text-5xl">
-            Built to be followed,
-            <span className="block text-[#2f5d50]">not abandoned.</span>
+            How the 3-Step Routine Works
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-            A clear process with simple timing helps people stay consistent long
-            enough to see visible change.
+            Clear steps. Simple timing. Built for consistency, not confusion.
           </p>
         </div>
 

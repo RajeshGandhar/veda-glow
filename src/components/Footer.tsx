@@ -38,8 +38,7 @@ export function Footer() {
                 Ayurvedic Skincare Ritual
               </p>
               <p className="mt-5 max-w-sm text-sm leading-7 text-neutral-600">
-                Premium herbal skincare designed for calm, balanced routines and
-                healthy long-term skin confidence.
+                Premium Ayurvedic skincare. Calm routines. Lasting confidence.
               </p>
               <p className="mt-6 inline-flex rounded-full border border-[#dccba6] bg-[#f8f0df] px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#5d4a2d]">
                 Since 2024 - Made for Indian skin
