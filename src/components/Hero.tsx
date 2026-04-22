@@ -10,9 +10,9 @@ type HeroProps = {
 
 export function Hero({ onAddToCart }: HeroProps) {
   const trustPills = [
-    "Derm-tested herbal care",
-    "Cash on delivery available",
-    "7-day satisfaction promise",
+    "AI-powered logo design",
+    "Create logo online in seconds",
+    "100% satisfaction guarantee",
   ] as const;
 
   return (
@@ -29,26 +29,27 @@ export function Hero({ onAddToCart }: HeroProps) {
         <div className="grid items-center gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
           <div className="order-2 text-center lg:order-1 lg:text-left">
             <p className="inline-flex items-center rounded-full border border-emerald-700/20 bg-white/70 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-veda-green shadow-[0_14px_36px_-30px_rgba(6,95,70,0.6)] backdrop-blur-md sm:text-[0.76rem]">
-              Ayurveda-backed starter ritual
+              Free logo maker — no design skills needed
             </p>
             <h1 className="mt-5 font-serif text-[2.1rem] leading-[1.02] tracking-[-0.04em] text-[#093228] sm:text-[3.15rem] lg:text-[3.9rem]">
-              Clear Skin in 28 Days,
-              <span className="block text-emerald-700">Naturally.</span>
+              AI Logo Generator for
+              <span className="block text-emerald-700">Startups & Creators</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-neutral-700 sm:text-lg lg:mx-0">
-              A premium 3-step kit for acne, oiliness, and dull skin. Minimal,
-              practical, and built for visible weekly progress.
+              Create stunning professional logos in seconds with our AI logo generator.
+              No design skills needed — fast, easy, and affordable logo design AI built
+              for founders, creators, and small businesses.
             </p>
 
             <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
               <BuyNowButton onClick={() => onAddToCart?.()} className="sm:min-w-[17.5rem]">
-                Start Your Skin Reset - Rs 299
+                Create Your Logo Now
               </BuyNowButton>
               <a
                 href="#how"
                 className="inline-flex min-h-[56px] items-center justify-center rounded-full border border-emerald-700/20 bg-white/80 px-7 py-3 text-sm font-semibold text-veda-green shadow-[0_14px_28px_-24px_rgba(6,95,70,0.7)] transition-colors hover:bg-emerald-50"
               >
-                See 3-Step Routine
+                See How It Works
               </a>
             </div>
 
@@ -67,7 +68,7 @@ export function Hero({ onAddToCart }: HeroProps) {
                   ))}
                 </span>
                 <span className="font-semibold text-veda-green">4.8/5</span>
-                <span>from 7,200+ verified reviews</span>
+                <span>from 7,200+ logo creators</span>
               </div>
               <ul className="grid w-full gap-2 sm:grid-cols-3">
                 {trustPills.map((pill) => (
