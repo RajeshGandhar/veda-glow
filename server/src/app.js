@@ -14,6 +14,7 @@ import couponRoutes from "./routes/coupon.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import sitemapRoutes from "./routes/sitemap.routes.js";
 import { getGaugeValue, getMetricSnapshot } from "./utils/observability.js";
 
 const app = express();
@@ -250,6 +251,7 @@ app.get("/api/health", async (_req, res) => {
 app.use("/api/coupons", couponRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/", sitemapRoutes);
 
 // Sentry error handler - must come before other error handlers
 app.use(sentryErrorHandler);
