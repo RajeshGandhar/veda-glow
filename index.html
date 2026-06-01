@@ -121,10 +121,11 @@
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
+    <!-- Use production/public asset path for preloading; remove if unused to avoid preload warnings -->
     <link
       rel="preload"
       as="image"
-      href="/src/assets/hero-premium.avif"
+      href="/hero-premium.avif"
       fetchpriority="high"
     />
     <link
