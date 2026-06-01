@@ -11,6 +11,7 @@ import {
 } from "./middleware/error.middleware.js";
 import { sentryRequestHandler, sentryErrorHandler } from "./utils/sentry.js";
 import couponRoutes from "./routes/coupon.routes.js";
+import pincodeRoutes from "./routes/pincode.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
@@ -58,10 +59,13 @@ const allowedOrigins = Array.from(
 // Security validation: Ensure production origins are HTTPS
 if (env.NODE_ENV === "production") {
   const insecureOrigins = allowedOrigins.filter(
-    (origin) => origin.startsWith("http://") && !origin.includes("localhost")
+    (origin) => origin.startsWith("http://") && !origin.includes("localhost"),
   );
   if (insecureOrigins.length > 0) {
-    console.error("[CORS Security] Production origins must use HTTPS:", insecureOrigins);
+    console.error(
+      "[CORS Security] Production origins must use HTTPS:",
+      insecureOrigins,
+    );
     throw new Error("Production CORS origins must use HTTPS");
   }
 }
@@ -85,7 +89,9 @@ app.use(
       }
 
       // Block all other origins
-      console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      console.warn(
+        `[CORS] Blocked request from unauthorized origin: ${origin}`,
+      );
       callback(new Error(`CORS policy: Origin ${origin} is not allowed`));
     },
     credentials: true, // Allow cookies and authorization headers
@@ -237,9 +243,9 @@ app.get("/api/health", async (_req, res) => {
       retry_count: metricSnapshot.totals.retry_count,
       dlq_size:
         metricSnapshot.totals.dlq_size ||
-        ((queueStats?.dlq?.waiting || 0) +
+        (queueStats?.dlq?.waiting || 0) +
           (queueStats?.dlq?.active || 0) +
-          (queueStats?.dlq?.delayed || 0)),
+          (queueStats?.dlq?.delayed || 0),
       stuck_orders_count: getGaugeValue("stuck_orders_count"),
     },
     queueStats,
@@ -249,6 +255,7 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/coupons", couponRoutes);
+app.use("/api/pincode", pincodeRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/", sitemapRoutes);

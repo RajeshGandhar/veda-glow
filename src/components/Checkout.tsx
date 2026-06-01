@@ -290,6 +290,7 @@ export function Checkout({
     "idle" | "loading" | "error" | "success"
   >("idle");
   const [couponMessage, setCouponMessage] = useState("");
+  const couponAbortRef = useRef<AbortController | null>(null);
 
   const nameRef = useRef<HTMLInputElement>(null);
   // ============================================================================
@@ -313,16 +314,14 @@ export function Checkout({
     setPincodeStatus("loading");
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://api.postalpincode.in/pincode/${form.pincode}`,
-        );
+        // Use server-side cached lookup to avoid client-side rate limits
+        const res = await fetch(`${API_URL}/pincode/${form.pincode}`);
         const data = await res.json();
-        const postOffice = data?.[0]?.PostOffice?.[0];
-        if (data?.[0]?.Status === "Success" && postOffice) {
+        if (data?.success) {
           setForm((prev) => ({
             ...prev,
-            city: postOffice.District ?? prev.city,
-            state: postOffice.State ?? prev.state,
+            city: data.city ?? prev.city,
+            state: data.state ?? prev.state,
           }));
           setErrors((prev) => ({ ...prev, city: "", state: "", pincode: "" }));
           setPincodeStatus("success");
@@ -411,8 +410,6 @@ export function Checkout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod]);
 
-
-
   const totalAmount = useMemo(
     () =>
       Math.max(
@@ -431,11 +428,18 @@ export function Checkout({
     if (!codeToValidate.trim()) return;
     setCouponStatus("loading");
     setCouponMessage("");
+    // Cancel any previous in-flight request
+    try {
+      couponAbortRef.current?.abort();
+    } catch {}
+    const ac = new AbortController();
+    couponAbortRef.current = ac;
 
     try {
       const res = await fetch(`${API_URL}/coupons/validate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: ac.signal,
         body: JSON.stringify({
           couponCode: codeToValidate,
           items: cartItems.map((i) => ({ id: i.id, quantity: i.quantity })),
@@ -445,6 +449,10 @@ export function Checkout({
           },
         }),
       });
+
+      // Clear abort ref after successful network response
+      couponAbortRef.current = null;
+
       const data = await res.json();
 
       if (data.valid) {
@@ -460,7 +468,12 @@ export function Checkout({
         setCouponStatus("error");
         setCouponMessage(data.message || "Invalid coupon code");
       }
-    } catch {
+    } catch (err) {
+      if ((err as any)?.name === "AbortError") {
+        // Request was cancelled - keep current state or reset to idle
+        setCouponStatus("idle");
+        return;
+      }
       setCouponStatus("error");
       setCouponMessage("Failed to validate coupon");
       setAppliedCoupon(null);

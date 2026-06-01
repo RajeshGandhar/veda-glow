@@ -1,6 +1,11 @@
 import Coupon from "../models/Coupon.js";
 import CouponUsage from "../models/CouponUsage.js";
 
+// Simple in-memory cache for recently accessed coupons to reduce DB roundtrips
+// Key: normalized coupon code -> { coupon, ts }
+const COUPON_CACHE = new Map();
+const COUPON_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
 const COUPON_INVALID_MESSAGE = "Invalid or inactive coupon code.";
 
 export function normalizeCouponCode(code) {
@@ -45,9 +50,7 @@ export function calculateCouponDiscount(orderValue, discountInput) {
     discount = Math.round(Math.min(fixedAmount, orderValue));
   } else {
     const percent = Number(
-      discountInput.discountValue ??
-        discountInput.discountPercent ??
-        0,
+      discountInput.discountValue ?? discountInput.discountPercent ?? 0,
     );
 
     if (!Number.isFinite(percent) || percent <= 0) return 0;
@@ -56,14 +59,21 @@ export function calculateCouponDiscount(orderValue, discountInput) {
 
   // Apply maxDiscount cap if configured
   const maxDiscount = Number(discountInput.maxDiscount);
-  if (Number.isFinite(maxDiscount) && maxDiscount > 0 && discount > maxDiscount) {
+  if (
+    Number.isFinite(maxDiscount) &&
+    maxDiscount > 0 &&
+    discount > maxDiscount
+  ) {
     discount = Math.round(maxDiscount);
   }
 
   return Math.min(discount, orderValue);
 }
 
-function getCouponBaseInvalidReason(coupon, { now = new Date(), orderValue = 0 } = {}) {
+function getCouponBaseInvalidReason(
+  coupon,
+  { now = new Date(), orderValue = 0 } = {},
+) {
   if (!coupon) return COUPON_INVALID_MESSAGE;
   if (!coupon.isActive) return "This coupon is not active.";
   if (coupon.validFrom && coupon.validFrom > now) {
@@ -159,7 +169,12 @@ async function findActiveCouponByCode(rawCode, { orderValue = 0 } = {}) {
 
 export async function resolveCouponByCode(
   rawCode,
-  { customerEmail, customerPhone, enforcePerUserLimit = false, orderValue = 0 } = {},
+  {
+    customerEmail,
+    customerPhone,
+    enforcePerUserLimit = false,
+    orderValue = 0,
+  } = {},
 ) {
   const code = normalizeCouponCode(rawCode);
 
@@ -170,7 +185,20 @@ export async function resolveCouponByCode(
     };
   }
 
-  const coupon = await Coupon.findOne({ code });
+  // Try cache first
+  const cached = COUPON_CACHE.get(code);
+  const now = Date.now();
+  let coupon = null;
+  if (cached && now - cached.ts < COUPON_CACHE_TTL_MS) {
+    coupon = cached.coupon;
+  } else {
+    // Fetch a lightweight plain object (lean) to avoid Mongoose document overhead
+    coupon = await Coupon.findOne({ code }).lean();
+    if (coupon) {
+      COUPON_CACHE.set(code, { coupon, ts: now });
+    }
+  }
+
   const invalidReason = getCouponBaseInvalidReason(coupon, { orderValue });
 
   if (invalidReason) {
