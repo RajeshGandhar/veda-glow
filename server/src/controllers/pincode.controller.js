@@ -1,18 +1,50 @@
-// Ensure `fetch` is available in Node (Node 18+ has global fetch). If not,
-// dynamically import `node-fetch` to provide a fallback.
-if (typeof fetch === "undefined") {
-  try {
-    const mod = await import("node-fetch");
-    // node-fetch v3 exports default
-    globalThis.fetch = mod.default ?? mod.fetch;
-  } catch (e) {
-    console.error("[PINCODE] node-fetch import failed", e);
-  }
-}
+import https from "node:https";
 
 // Simple in-memory cache for pincode lookups
 const PINCODE_CACHE = new Map();
 const PINCODE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const POSTAL_API_HOST = "api.postalpincode.in";
+const POSTAL_API_TIMEOUT_MS = 8000;
+
+function fetchPostalPincode(pincode) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      {
+        hostname: POSTAL_API_HOST,
+        path: `/pincode/${encodeURIComponent(pincode)}`,
+        method: "GET",
+        timeout: POSTAL_API_TIMEOUT_MS,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "VedaGlow/1.0",
+        },
+        // India Post's public API certificate can expire before their data API
+        // is updated. This endpoint only returns public pincode metadata.
+        rejectUnauthorized: false,
+      },
+      (resp) => {
+        let body = "";
+        resp.setEncoding("utf8");
+        resp.on("data", (chunk) => {
+          body += chunk;
+        });
+        resp.on("end", () => {
+          resolve({
+            ok: resp.statusCode >= 200 && resp.statusCode < 300,
+            status: resp.statusCode,
+            statusText: resp.statusMessage,
+            body,
+          });
+        });
+      },
+    );
+
+    req.on("timeout", () => {
+      req.destroy(new Error("Postal API request timed out"));
+    });
+    req.on("error", reject);
+  });
+}
 
 export async function lookupPincode(req, res) {
   const raw = String(req.params.pincode ?? "").trim();
@@ -30,17 +62,7 @@ export async function lookupPincode(req, res) {
   }
 
   try {
-    // Add a fetch timeout to avoid long waits
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    let resp;
-    try {
-      resp = await fetch(`https://api.postalpincode.in/pincode/${pincode}`, {
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
+    const resp = await fetchPostalPincode(pincode);
 
     if (!resp || !resp.ok) {
       const statusInfo = resp
@@ -57,7 +79,7 @@ export async function lookupPincode(req, res) {
 
     let data;
     try {
-      data = await resp.json();
+      data = JSON.parse(resp.body);
     } catch (parseErr) {
       console.error("[PINCODE] Failed to parse postal API response", parseErr);
       res
