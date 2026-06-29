@@ -63,20 +63,24 @@ export function SeoContent() {
         className="bg-white px-4 py-12 sm:px-8 sm:py-16"
       >
         <div className="mx-auto max-w-4xl space-y-12">
-
           {/* ── Product overview ── */}
           <div>
             <h2 className="font-serif text-2xl tracking-tight text-[#14281f] sm:text-3xl">
               About VedaGlow 28-Day Skin Reset Kit
             </h2>
             <p className="mt-4 text-sm leading-8 text-neutral-700 sm:text-base">
-              <strong>VedaGlow 28-Day Skin Reset Kit</strong> is a complete Ayurvedic skincare system for India's most common skin concerns: <strong>persistent acne, excess oil, and dull tone</strong>.
+              <strong>VedaGlow 28-Day Skin Reset Kit</strong> is a complete
+              Ayurvedic skincare system for India's most common skin concerns:{" "}
+              <strong>persistent acne, excess oil, and dull tone</strong>.
             </p>
             <p className="mt-4 text-sm leading-8 text-neutral-700 sm:text-base">
-              Three targeted herbal formulas. One clear weekly schedule. No overwhelm, just results.
+              Three targeted herbal formulas. One clear weekly schedule. No
+              overwhelm, just results.
             </p>
             <p className="mt-4 text-sm leading-8 text-neutral-700 sm:text-base">
-              <strong>100% Ayurvedic.</strong> Free from parabens, sulphates, and synthetic fragrances. Starter kit at Rs 299 with COD across India.
+              <strong>100% Ayurvedic.</strong> Free from parabens, sulphates,
+              and synthetic fragrances. Starter kit at Rs 499 with COD across
+              India.
             </p>
           </div>
 
@@ -95,7 +99,10 @@ export function SeoContent() {
                 "100% herbal, zero harsh chemicals",
               ].map((benefit) => (
                 <li key={benefit} className="flex items-start gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600" aria-hidden />
+                  <span
+                    className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600"
+                    aria-hidden
+                  />
                   {benefit}
                 </li>
               ))}
@@ -108,21 +115,45 @@ export function SeoContent() {
               Ayurvedic Ingredients for Clear Skin
             </h2>
             <p className="mt-4 text-sm leading-8 text-neutral-700 sm:text-base">
-              <strong>Time-tested Ayurvedic botanicals</strong> proven for skin clarity and nourishment:
+              <strong>Time-tested Ayurvedic botanicals</strong> proven for skin
+              clarity and nourishment:
             </p>
             <ul className="mt-4 grid gap-3 text-sm leading-7 text-neutral-700 sm:grid-cols-2 sm:text-base">
               {[
-                { name: "Neem", benefit: "antibacterial, reduces acne-causing bacteria" },
-                { name: "Turmeric (Haldi)", benefit: "anti-inflammatory, brightens skin tone" },
-                { name: "Tulsi (Holy Basil)", benefit: "purifies pores, controls excess sebum" },
-                { name: "Multani Mitti", benefit: "deep-cleanses and absorbs oil" },
-                { name: "Aloe Vera", benefit: "soothes irritation, hydrates without grease" },
-                { name: "Sandalwood (Chandan)", benefit: "calms redness, supports even tone" },
+                {
+                  name: "Neem",
+                  benefit: "antibacterial, reduces acne-causing bacteria",
+                },
+                {
+                  name: "Turmeric (Haldi)",
+                  benefit: "anti-inflammatory, brightens skin tone",
+                },
+                {
+                  name: "Tulsi (Holy Basil)",
+                  benefit: "purifies pores, controls excess sebum",
+                },
+                {
+                  name: "Multani Mitti",
+                  benefit: "deep-cleanses and absorbs oil",
+                },
+                {
+                  name: "Aloe Vera",
+                  benefit: "soothes irritation, hydrates without grease",
+                },
+                {
+                  name: "Sandalwood (Chandan)",
+                  benefit: "calms redness, supports even tone",
+                },
               ].map(({ name, benefit }) => (
                 <li key={name} className="flex items-start gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden />
+                  <span
+                    className="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-500"
+                    aria-hidden
+                  />
                   <span>
-                    <strong className="font-semibold text-[#173229]">{name}</strong>
+                    <strong className="font-semibold text-[#173229]">
+                      {name}
+                    </strong>
                     {" — "}
                     {benefit}
                   </span>
@@ -149,7 +180,10 @@ export function SeoContent() {
                 "Want visible change in 28 days",
               ].map((point) => (
                 <li key={point} className="flex items-start gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600" aria-hidden />
+                  <span
+                    className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600"
+                    aria-hidden
+                  />
                   {point}
                 </li>
               ))}
@@ -163,9 +197,18 @@ export function SeoContent() {
             </h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-4">
               {[
-                { week: "Week 1", result: "Cleaner skin. Less congestion. Oil control begins." },
-                { week: "Week 2", result: "Fewer breakouts. Smoother texture." },
-                { week: "Week 3", result: "Fading acne marks. More even tone." },
+                {
+                  week: "Week 1",
+                  result: "Cleaner skin. Less congestion. Oil control begins.",
+                },
+                {
+                  week: "Week 2",
+                  result: "Fewer breakouts. Smoother texture.",
+                },
+                {
+                  week: "Week 3",
+                  result: "Fading acne marks. More even tone.",
+                },
                 { week: "Week 4", result: "Clearer, calmer, radiant skin." },
               ].map(({ week, result }) => (
                 <div
@@ -175,7 +218,9 @@ export function SeoContent() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
                     {week}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-neutral-700">{result}</p>
+                  <p className="mt-2 text-sm leading-6 text-neutral-700">
+                    {result}
+                  </p>
                 </div>
               ))}
             </div>
@@ -188,7 +233,10 @@ export function SeoContent() {
             </h2>
             <dl className="mt-6 space-y-6">
               {faqs.map(({ question, answer }) => (
-                <div key={question} className="border-b border-[#e7ecdf] pb-6 last:border-b-0 last:pb-0">
+                <div
+                  key={question}
+                  className="border-b border-[#e7ecdf] pb-6 last:border-b-0 last:pb-0"
+                >
                   <dt className="text-sm font-semibold text-[#173229] sm:text-base">
                     {question}
                   </dt>
@@ -199,7 +247,6 @@ export function SeoContent() {
               ))}
             </dl>
           </div>
-
         </div>
       </section>
     </>

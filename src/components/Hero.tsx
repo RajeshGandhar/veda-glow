@@ -39,12 +39,16 @@ export function Hero({ onAddToCart }: HeroProps) {
               Clear Skin Naturally
             </p>
             <p className="mx-auto mt-5 max-w-xl text-base leading-8 text-neutral-700 sm:text-lg lg:mx-0">
-              Three Ayurvedic formulas. One focused routine. Built for acne, oil control, and natural glow.
+              Three Ayurvedic formulas. One focused routine. Built for acne, oil
+              control, and natural glow.
             </p>
 
             <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <BuyNowButton onClick={() => onAddToCart?.()} className="sm:min-w-[17.5rem]">
-                Start Your Skin Reset — Rs 299
+              <BuyNowButton
+                onClick={() => onAddToCart?.()}
+                className="sm:min-w-[17.5rem]"
+              >
+                Start Your Skin Reset — Rs 499
               </BuyNowButton>
               <a
                 href="#how"
@@ -56,7 +60,10 @@ export function Hero({ onAddToCart }: HeroProps) {
 
             <div className="mt-7 flex flex-col items-center gap-4 lg:items-start">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e8dcc4] bg-[#fffaf1] px-4 py-2 text-sm text-neutral-700 shadow-[0_14px_28px_-24px_rgba(146,116,64,0.45)]">
-                <span className="flex items-center gap-1 text-amber-500" aria-hidden>
+                <span
+                  className="flex items-center gap-1 text-amber-500"
+                  aria-hidden
+                >
                   {[0, 1, 2, 3, 4].map((star) => (
                     <svg
                       key={star}
@@ -118,7 +125,9 @@ export function Hero({ onAddToCart }: HeroProps) {
                 <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-neutral-600">
                   Starter Offer
                 </p>
-                <p className="mt-1 font-serif text-2xl leading-none text-[#0b4738]">Rs 299</p>
+                <p className="mt-1 font-serif text-2xl leading-none text-[#0b4738]">
+                  Rs 499
+                </p>
               </div>
             </div>
           </div>

@@ -55,7 +55,8 @@ export function Solution({ onAddToCart }: SolutionProps) {
             Natural Herbal Ingredients
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-            Each formula has one job. Your skin gets consistent results without the clutter.
+            Each formula has one job. Your skin gets consistent results without
+            the clutter.
           </p>
 
           <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-xl border border-[#e8dcc8] bg-[#fffaf0] px-3 py-2 text-xs font-semibold text-[#4a3b22] sm:text-sm">
@@ -63,7 +64,7 @@ export function Solution({ onAddToCart }: SolutionProps) {
             <span className="text-[#b89c6a]">•</span>
             <span>28-day guided rhythm</span>
             <span className="text-[#b89c6a]">•</span>
-            <span>Starter price Rs 299</span>
+            <span>Starter price Rs 499</span>
           </div>
         </div>
 
@@ -92,18 +93,20 @@ export function Solution({ onAddToCart }: SolutionProps) {
 
               <div
                 className="premium-product-frame relative isolate aspect-square overflow-hidden rounded-3xl border border-white/60 bg-[linear-gradient(150deg,#fffdf8,#f4ede1)] shadow-[0_2px_0_rgba(255,255,255,0.9)_inset,0_32px_56px_-32px_rgba(15,23,42,0.38)]"
-                style={{ boxShadow: `0 2px 0 rgba(255,255,255,0.9) inset, 0 32px 56px -32px rgba(15,23,42,0.38), 0 0 0 1.5px ${product.accent}` }}
+                style={{
+                  boxShadow: `0 2px 0 rgba(255,255,255,0.9) inset, 0 32px 56px -32px rgba(15,23,42,0.38), 0 0 0 1.5px ${product.accent}`,
+                }}
               >
                 <div className="premium-product-shine" />
-                  <img
-                    src={product.image}
-                    alt={product.alt}
-                    width={720}
-                    height={720}
-                    loading="lazy"
-                    decoding="async"
-                    className="premium-product-image h-full w-full object-cover object-center transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
-                  />
+                <img
+                  src={product.image}
+                  alt={product.alt}
+                  width={720}
+                  height={720}
+                  loading="lazy"
+                  decoding="async"
+                  className="premium-product-image h-full w-full object-cover object-center transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
+                />
               </div>
 
               <div className="pt-5">
@@ -115,7 +118,7 @@ export function Solution({ onAddToCart }: SolutionProps) {
                 </p>
 
                 <p className="mt-4 inline-flex rounded-full border border-[#e6dcc8] bg-white/75 px-3 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[#4e4e4e]">
-                  Included in the Rs 299 starter kit
+                  Included in the Rs 499 starter kit
                 </p>
               </div>
             </li>
@@ -129,7 +132,7 @@ export function Solution({ onAddToCart }: SolutionProps) {
                 Starter Offer
               </p>
               <p className="mt-2 font-serif text-2xl leading-tight text-[#173229] sm:text-3xl">
-                Add the full 28-day trio for Rs 299
+                Add the full 28-day trio for Rs 499
               </p>
               <p className="mt-2 text-sm text-neutral-600">
                 Delivery in 3-5 days, COD available, and secure checkout.
@@ -141,7 +144,7 @@ export function Solution({ onAddToCart }: SolutionProps) {
                 onClick={() => onAddToCart?.()}
                 className="w-full max-w-none bg-[#20483b]! text-base font-bold text-white shadow-[0_24px_46px_-28px_rgba(23,50,41,0.66)] hover:bg-[#173a2f]!"
               >
-                Add to Cart - Rs 299
+                Add to Cart - Rs 499
               </BuyNowButton>
             </div>
           </div>

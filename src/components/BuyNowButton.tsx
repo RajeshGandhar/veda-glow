@@ -24,7 +24,7 @@ export function BuyNowButton({
   variant = "primary",
   size = "default",
   className = "",
-  children = "Buy Now @ ₹299",
+  children = "Buy Now @ ₹499",
   href = "#cta",
   onClick,
   disabled,

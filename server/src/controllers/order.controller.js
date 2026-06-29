@@ -23,7 +23,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     body: JSON.stringify(req.body),
     headers: {
       origin: req.headers.origin,
-      contentType: req.headers['content-type'],
+      contentType: req.headers["content-type"],
     },
   });
 
@@ -38,14 +38,14 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   const { customer, items, paymentType, idempotencyKey, couponCode } =
     parsed.data;
-  
+
   console.log("[CREATE ORDER] Validated data", {
     customerName: customer.name,
     customerPhone: customer.phone,
     itemsCount: items.length,
     paymentType,
     idempotencyKey,
-    couponCode: couponCode || 'none',
+    couponCode: couponCode || "none",
   });
 
   const qty = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -63,8 +63,10 @@ export const createOrder = asyncHandler(async (req, res) => {
   });
 
   if (normalizedCouponCode) {
-    console.log("[CREATE ORDER] Processing coupon", { couponCode: normalizedCouponCode });
-    
+    console.log("[CREATE ORDER] Processing coupon", {
+      couponCode: normalizedCouponCode,
+    });
+
     const { coupon, message } = await resolveCouponByCode(
       normalizedCouponCode,
       {
@@ -75,7 +77,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     );
 
     if (!coupon) {
-      console.warn("[CREATE ORDER] Coupon invalid", { couponCode: normalizedCouponCode, message });
+      console.warn("[CREATE ORDER] Coupon invalid", {
+        couponCode: normalizedCouponCode,
+        message,
+      });
       throw new HttpError(400, message || "Invalid or inactive coupon code.");
     }
 
@@ -102,7 +107,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     discountAmount = calculateCouponDiscount(orderValue, coupon);
     amount = Math.max(orderValue - discountAmount, 0);
     appliedCoupon = coupon;
-    
+
     console.log("[CREATE ORDER] Coupon applied", {
       couponCode: normalizedCouponCode,
       discountAmount,
@@ -113,11 +118,14 @@ export const createOrder = asyncHandler(async (req, res) => {
   const existingOrder = await Order.findOne({ idempotencyKey });
 
   if (existingOrder) {
-    console.log("[CREATE ORDER] Idempotent request - returning existing order", {
-      orderId: existingOrder._id.toString(),
-      orderNumber: existingOrder.orderNumber,
-    });
-    
+    console.log(
+      "[CREATE ORDER] Idempotent request - returning existing order",
+      {
+        orderId: existingOrder._id.toString(),
+        orderNumber: existingOrder.orderNumber,
+      },
+    );
+
     if (
       existingOrder.paymentType !== paymentType ||
       existingOrder.qty !== qty ||
@@ -152,7 +160,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   const orderNumber = await getNextSequence("orderNumber");
-  
+
   console.log("[CREATE ORDER] Generated order number", { orderNumber });
 
   const baseOrder = {
@@ -186,13 +194,13 @@ export const createOrder = asyncHandler(async (req, res) => {
   // 3. Order is marked as "partially_paid" after ₹39 payment
   // 4. advanceAmount = ₹39, balanceDue = (total - ₹39)
   //
-  // Example: Order total = ₹299
+  // Example: Order total = ₹499
   // - Razorpay order created for ₹39 (confirmation amount)
   // - After payment: advanceAmount = ₹39, balanceDue = ₹260
   // - Customer pays ₹260 to delivery person
   if (paymentType === "cod") {
     const codAmountPaise = Math.round(COD_CONFIRMATION_AMOUNT * 100);
-    
+
     console.log("[CREATE ORDER] Creating COD Razorpay order", {
       codAmountPaise,
       codAmountRupees: COD_CONFIRMATION_AMOUNT,
@@ -213,7 +221,7 @@ export const createOrder = asyncHandler(async (req, res) => {
           balanceOnDelivery: Math.max(amount - COD_CONFIRMATION_AMOUNT, 0),
         },
       });
-      
+
       console.log("[CREATE ORDER] Razorpay COD order created", {
         razorpayOrderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
@@ -230,7 +238,7 @@ export const createOrder = asyncHandler(async (req, res) => {
           advanceAmount: 0,
           balanceDue: amount, // Full amount is due initially
         });
-        
+
         console.log("[CREATE ORDER] COD order created in DB", {
           orderId: order._id.toString(),
           orderNumber: order.orderNumber,
@@ -238,7 +246,9 @@ export const createOrder = asyncHandler(async (req, res) => {
         });
       } catch (error) {
         if (error?.code === 11000) {
-          console.log("[CREATE ORDER] Duplicate key error - fetching existing order");
+          console.log(
+            "[CREATE ORDER] Duplicate key error - fetching existing order",
+          );
           const duplicateOrder = await Order.findOne({ idempotencyKey });
           if (duplicateOrder) {
             res.status(200).json(buildCreateOrderResponse(duplicateOrder));
@@ -257,7 +267,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         discountAmount,
         finalAmount: amount,
       });
-      
+
       console.log("[CREATE ORDER] COD order complete - sending response");
 
       res.status(201).json(buildCreateOrderResponse(order));
@@ -273,7 +283,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   const amountPaise = Math.round(amount * 100);
-  
+
   console.log("[CREATE ORDER] Creating Razorpay order", {
     amountPaise,
     amountRupees: amount,
@@ -289,7 +299,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         phone: customer.phone,
       },
     });
-    
+
     console.log("[CREATE ORDER] Razorpay order created", {
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
@@ -305,7 +315,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         orderStatus: "pending",
         razorpayOrderId: razorpayOrder.id,
       });
-      
+
       console.log("[CREATE ORDER] Order created in DB", {
         orderId: order._id.toString(),
         orderNumber: order.orderNumber,
@@ -313,7 +323,9 @@ export const createOrder = asyncHandler(async (req, res) => {
       });
     } catch (error) {
       if (error?.code === 11000) {
-        console.log("[CREATE ORDER] Duplicate key error - fetching existing order");
+        console.log(
+          "[CREATE ORDER] Duplicate key error - fetching existing order",
+        );
         const duplicateOrder = await Order.findOne({ idempotencyKey });
         if (duplicateOrder) {
           res.status(200).json(buildCreateOrderResponse(duplicateOrder));
@@ -332,7 +344,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       discountAmount,
       finalAmount: amount,
     });
-    
+
     console.log("[CREATE ORDER] Order complete - sending response");
 
     res.status(201).json(buildCreateOrderResponse(order));
@@ -368,7 +380,8 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   });
 
   const { idempotencyKey } = req.params;
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+    req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     console.error("[VERIFY PAYMENT] Missing required fields", {
@@ -423,7 +436,9 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   order.paymentStatus = isCOD ? "partially_paid" : "paid";
   order.orderStatus = "confirmed";
   order.advanceAmount = paidAmount;
-  order.balanceDue = isCOD ? Math.max(order.amount - COD_CONFIRMATION_AMOUNT, 0) : 0;
+  order.balanceDue = isCOD
+    ? Math.max(order.amount - COD_CONFIRMATION_AMOUNT, 0)
+    : 0;
 
   await order.save();
 

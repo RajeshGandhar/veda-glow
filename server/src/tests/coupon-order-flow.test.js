@@ -137,10 +137,7 @@ test("validateCoupon rejects coupon when per-user limit is reached", async (t) =
 
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.valid, false);
-  assert.match(
-    response.body.message,
-    /maximum allowed times|already used/i,
-  );
+  assert.match(response.body.message, /maximum allowed times|already used/i);
 });
 
 test("createOrder applies coupon discount and tracks usage", async (t) => {
@@ -206,7 +203,7 @@ test("createOrder applies coupon discount and tracks usage", async (t) => {
           id: "veda-kit",
           name: "VedaGlow 28-Day Kit",
           quantity: 2,
-          price: 299,
+          price: 499,
         },
       ],
       paymentType: "razorpay",
@@ -275,7 +272,7 @@ test("createOrder blocks checkout when coupon per-user limit is exceeded", async
             id: "veda-kit",
             name: "VedaGlow 28-Day Kit",
             quantity: 1,
-            price: 299,
+            price: 499,
           },
         ],
         paymentType: "razorpay",

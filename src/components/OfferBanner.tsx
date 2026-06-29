@@ -24,10 +24,13 @@ export function OfferBanner({ onAddToCart }: OfferBannerProps) {
             </p>
             <h2 className="mt-4 font-serif text-[2rem] leading-[1.03] tracking-[-0.03em] text-white sm:text-[2.6rem]">
               Claim the 28-day starter kit
-              <span className="block text-[#f8d889]">before this batch closes.</span>
+              <span className="block text-[#f8d889]">
+                before this batch closes.
+              </span>
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
-              Priority dispatch. Secure payment. Satisfaction guaranteed. Limited availability at this price.
+              Priority dispatch. Secure payment. Satisfaction guaranteed.
+              Limited availability at this price.
             </p>
             <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-[#f8d889]/30 bg-[#f8d889]/16 px-4 py-2 text-sm font-semibold text-[#fef0cd]">
               <span className="text-base">Live now:</span>
@@ -40,11 +43,9 @@ export function OfferBanner({ onAddToCart }: OfferBannerProps) {
               <p className="text-sm font-medium uppercase tracking-[0.16em] text-white/75">
                 Starter Price
               </p>
-              <p className="font-serif text-[1.9rem] leading-none text-white sm:text-[2.25rem]">Rs 299</p>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/85">
-              <span>Bundle Deal</span>
-              <span className="text-[#f8d889]">2 Kits - Rs 499</span>
+              <p className="font-serif text-[1.9rem] leading-none text-white sm:text-[2.25rem]">
+                Rs 499
+              </p>
             </div>
             <ul className="mt-4 space-y-2 text-sm text-white/85">
               <li>- 3 focused formulas for acne, oil, and dullness</li>
@@ -53,19 +54,12 @@ export function OfferBanner({ onAddToCart }: OfferBannerProps) {
             </ul>
             <div className="mt-5 grid gap-3">
               <BuyNowButton
-                onClick={() => onAddToCart?.(1)}
+                onClick={() => onAddToCart?.()}
                 variant="onDark"
                 className="w-full max-w-none sm:min-w-0"
               >
-                Claim 1 Kit - Rs 299
+                Claim 1 Kit - Rs 499
               </BuyNowButton>
-              <button
-                type="button"
-                onClick={() => onAddToCart?.(2)}
-                className="inline-flex min-h-[52px] w-full items-center justify-center rounded-full border border-white/45 bg-[#f8d889] px-6 py-3 text-sm font-semibold text-[#173229] transition-colors hover:bg-[#f4ce6a]"
-              >
-                Upgrade to 2 Kits - Rs 499
-              </button>
             </div>
             <p className="mt-3 text-center text-xs text-white/70">
               Encrypted payments - COD available - Priority support

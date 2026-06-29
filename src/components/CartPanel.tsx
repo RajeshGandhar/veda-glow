@@ -20,8 +20,8 @@ type Props = {
   onAddProduct?: () => void;
 };
 
-const SINGLE_KIT_PRICE = 299;
-const SINGLE_KIT_DELIVERY_CHARGE = 39;
+const SINGLE_KIT_PRICE = 499;
+const SINGLE_KIT_DELIVERY_CHARGE = 0;
 
 export function CartPanel({
   cartItems,
@@ -44,7 +44,8 @@ export function CartPanel({
     const previousBodyLeft = body.style.left;
     const previousBodyRight = body.style.right;
     const previousHtmlOverflow = documentElement.style.overflow;
-    const previousHtmlOverscrollBehavior = documentElement.style.overscrollBehavior;
+    const previousHtmlOverscrollBehavior =
+      documentElement.style.overscrollBehavior;
 
     body.style.overflow = "hidden";
     body.style.position = "fixed";
@@ -72,9 +73,6 @@ export function CartPanel({
     () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
     [cartItems],
   );
-  const twoKitOffer = useMemo(() => getPriceByQty(2), []);
-  const isTwoKitOfferEligible = itemCount === 1 && cartItems.length > 0;
-
   const pricingSummary = useMemo(
     () =>
       cartItems.reduce(
@@ -89,8 +87,8 @@ export function CartPanel({
       ),
     [cartItems],
   );
-  const deliveryCharge = cartTotal === SINGLE_KIT_PRICE ? SINGLE_KIT_DELIVERY_CHARGE : 0;
-  const totalWithDelivery = cartTotal + deliveryCharge;
+  const deliveryCharge = 0;
+  const totalWithDelivery = cartTotal;
 
   const closePanel = () => {
     setIsOpen(false);
@@ -101,12 +99,6 @@ export function CartPanel({
     if (e.target === e.currentTarget) {
       closePanel();
     }
-  };
-
-  const handleUnlockTwoKitOffer = () => {
-    const mainItem = cartItems[0];
-    if (!mainItem) return;
-    onQuantityChange(mainItem.id, Math.max(2, mainItem.quantity + 1));
   };
 
   const handleItemQuantityChange = (item: CartItem, delta: number) => {
@@ -154,7 +146,10 @@ export function CartPanel({
               <span>
                 {itemCount} item{itemCount === 1 ? "" : "s"} selected
               </span>
-              <span className="h-1 w-1 rounded-full bg-[#b79a6a]" aria-hidden="true" />
+              <span
+                className="h-1 w-1 rounded-full bg-[#b79a6a]"
+                aria-hidden="true"
+              />
               <span>Curated essentials with secure premium checkout</span>
             </div>
           </div>
@@ -179,7 +174,9 @@ export function CartPanel({
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-neutral-500">
                   Starter Price
                 </p>
-                <p className="mt-1 font-serif text-2xl leading-none text-[#123f33]">Rs 299</p>
+                <p className="mt-1 font-serif text-2xl leading-none text-[#123f33]">
+                  Rs 499
+                </p>
               </div>
 
               <button
@@ -237,37 +234,17 @@ export function CartPanel({
                           </button>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                          {itemPricing.isMostPopular && (
-                            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[0.56rem] font-bold uppercase tracking-[0.14em] text-emerald-700 sm:py-1 sm:text-[0.62rem]">
-                              Most popular
-                            </span>
-                          )}
-                        </div>
+                        <div className="flex flex-wrap items-center gap-2"></div>
 
                         <div className="border-t border-[#eadfca] pt-2.5 sm:pt-3">
                           <div className="flex items-center gap-2">
-                            <div className="inline-flex items-center gap-1 rounded-full border border-[#d0dccf] bg-[#f8fbf8] p-1 text-[#23443a] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)]">
-                              <button
-                                type="button"
-                                onClick={() => handleItemQuantityChange(item, -1)}
-                                disabled={item.quantity <= 1}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#cfddd4] bg-white text-[0.92rem] font-bold text-veda-green transition-colors hover:bg-[#f2faf6] disabled:cursor-not-allowed disabled:opacity-45"
-                                aria-label={`Decrease ${item.name} quantity`}
-                              >
-                                -
-                              </button>
-                              <span className="min-w-7 text-center text-[0.72rem] font-bold uppercase tracking-[0.1em] sm:text-[0.76rem]">
-                                {item.quantity}
+                            <div className="inline-flex items-center gap-2 rounded-full border border-[#d0dccf] bg-[#f8fbf8] px-3 py-1 text-[#23443a] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)]">
+                              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] sm:text-[0.76rem]">
+                                Quantity
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => handleItemQuantityChange(item, 1)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-veda-green bg-veda-green text-[0.92rem] font-bold text-white transition-colors hover:bg-[#064837]"
-                                aria-label={`Increase ${item.name} quantity`}
-                              >
-                                +
-                              </button>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[0.72rem] font-bold">
+                                1
+                              </span>
                             </div>
 
                             <div className="ml-auto min-w-[5rem] text-right">
@@ -305,27 +282,6 @@ export function CartPanel({
 
         {!!cartItems.length && (
           <footer className="sticky bottom-0 border-t border-[#dcccad] bg-[linear-gradient(180deg,#fffdf8_0%,#f7efdf_100%)] px-3.5 py-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:px-5 sm:py-5">
-            {isTwoKitOfferEligible && (
-              <div className="mb-2.5 rounded-lg border border-[#d9c8a7] bg-[linear-gradient(135deg,#fffefb_0%,#f5ecda_100%)] p-2.5 shadow-[0_20px_36px_-30px_rgba(15,23,42,0.5)] sm:mb-3 sm:p-3.5">
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[#77623e] sm:text-[0.62rem]">
-                  Premium Offer
-                </p>
-                <p className="mt-1.5 text-[0.75rem] font-semibold leading-snug text-[#173229] sm:text-[0.82rem]">
-                  Add 1 more kit: get 2 kits for Rs {twoKitOffer.discounted} + free delivery.
-                </p>
-                <p className="mt-1 text-[0.62rem] font-medium text-[#6a5837] sm:text-[0.68rem]">
-                  Save Rs {twoKitOffer.savings} instantly.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleUnlockTwoKitOffer}
-                  className="mt-2 w-full rounded-lg bg-[linear-gradient(118deg,#0f3f33_0%,#1b5a47_62%,#7a5a2f_100%)] px-3.5 py-2.5 text-[0.68rem] font-bold tracking-[0.01em] text-white shadow-[0_20px_36px_-24px_rgba(6,95,70,0.74)] transition-all hover:-translate-y-0.5 hover:bg-[linear-gradient(118deg,#0a3027_0%,#154638_62%,#6a4d27_100%)] active:scale-[0.99] sm:mt-2.5 sm:py-2.5 sm:text-[0.72rem]"
-                >
-                  Add 1 More Kit - Unlock Offer
-                </button>
-              </div>
-            )}
-
             <div className="rounded-lg border border-[#dcccad] bg-[linear-gradient(180deg,#ffffff_0%,#f8f1e4_100%)] p-2 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.55)] sm:p-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-[0.74rem] font-semibold text-neutral-700 sm:text-[0.78rem]">

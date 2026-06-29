@@ -111,7 +111,7 @@ export const createOrderSchema = z
                 .regex(/^[a-zA-Z0-9_-]+$/),
             ),
             name: sanitizeString(z.string().min(1).max(160)),
-            quantity: z.number().int().min(1).max(10),
+            quantity: z.number().int().min(1).max(1),
             price: z.number().nonnegative().max(100000).optional(),
           })
           .strict(),

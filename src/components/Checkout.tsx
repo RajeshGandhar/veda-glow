@@ -37,8 +37,8 @@ type AddressForm = {
 type PincodeStatus = "idle" | "loading" | "success" | "error";
 
 const COD_ADVANCE = 39; // COD confirmation advance in INR
-const SINGLE_KIT_PRICE = 299;
-const SINGLE_KIT_DELIVERY_CHARGE = 39;
+const SINGLE_KIT_PRICE = 499;
+const SINGLE_KIT_DELIVERY_CHARGE = 0;
 const PINCODE_DEBOUNCE_MS = 500;
 
 function StepBadge({
@@ -158,42 +158,22 @@ function SummaryCard({
   }
 
   const qty = mainItem.quantity;
-  const { discounted, original, savings, isMostPopular } = getPriceByQty(qty);
+  const { discounted, original, savings } = getPriceByQty(qty);
 
   return (
     <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-lg font-semibold">Product summary</h3>
-        {isMostPopular && (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-            Most Popular
-          </span>
-        )}
       </div>
       <div className="rounded-lg border border-neutral-200 p-3">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-semibold">{mainItem.name}</p>
-            <p className="text-xs text-neutral-500">Unit price ₹299</p>
+            <p className="text-xs text-neutral-500">Unit price ₹499</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                onQuantityChange(mainItem.id, Math.max(1, qty - 1))
-              }
-              className="h-8 w-8 rounded border border-neutral-300 text-veda-green"
-            >
-              -
-            </button>
-            <span className="min-w-6 text-center font-semibold">{qty}</span>
-            <button
-              type="button"
-              onClick={() => onQuantityChange(mainItem.id, qty + 1)}
-              className="h-8 w-8 rounded border border-neutral-300 bg-veda-green text-white"
-            >
-              +
-            </button>
+          <div className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-[#f8fbf8] px-3 py-1 text-sm font-semibold text-veda-green">
+            <span>Quantity</span>
+            <span className="rounded-full bg-white px-2 py-0.5">1</span>
           </div>
         </div>
         <div className="mt-3 border-t border-neutral-200 pt-3 space-y-1">
@@ -207,10 +187,6 @@ function SummaryCard({
                 <span>Original (MRP)</span>
                 <span className="line-through">₹{original}</span>
               </div>
-              <div className="flex justify-between text-xs font-semibold text-emerald-700">
-                <span>Bundle Savings</span>
-                <span>-₹{savings}</span>
-              </div>
             </>
           )}
           <div className="flex justify-between text-xs font-semibold text-neutral-600">
@@ -221,14 +197,8 @@ function SummaryCard({
       </div>
 
       {!couponDiscount && (
-        <p
-          className={`mt-2 text-xs font-semibold ${qty < 2 ? "text-amber-700" : "text-emerald-700"}`}
-        >
-          {qty < 2
-            ? "Upgrade to 2 kits at ₹499 for better value and free delivery."
-            : qty === 2
-              ? "Excellent choice. Your 2-kit value pricing is active."
-              : "Bundle value pricing is active on this order."}
+        <p className="mt-2 text-xs font-semibold text-emerald-700">
+          Single kit pricing applied. COD available with free delivery.
         </p>
       )}
 
@@ -342,10 +312,7 @@ export function Checkout({
 
   const isCod = paymentMethod === "cod";
   const productPrice = useMemo(() => getPriceByQty(qty).discounted, [qty]);
-  const deliveryCharge =
-    canProceed && productPrice === SINGLE_KIT_PRICE
-      ? SINGLE_KIT_DELIVERY_CHARGE
-      : 0;
+  const deliveryCharge = 0;
 
   // ============================================================================
   // FIX: Reset payment state when cart changes
@@ -533,7 +500,7 @@ export function Checkout({
         // ============================================================================
         // FIX: Store amount in RUPEES (not paise)
         // ============================================================================
-        // Backend sends amount in RUPEES (e.g., 39 for COD, 299 for prepaid)
+        // Backend sends amount in RUPEES (e.g., 39 for COD, 499 for prepaid)
         // RazorpayButton will convert to paise (multiply by 100)
         setBackendOrder({
           orderId: data.order.id,

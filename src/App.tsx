@@ -12,6 +12,7 @@ import { Footer } from "./components/Footer";
 import { CartPanel } from "./components/CartPanel";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { NotFoundPage } from "./components/ErrorPages";
+import { getPriceByQty } from "./utils/pricing";
 const Checkout = lazy(() =>
   import("./components/Checkout").then((m) => ({ default: m.Checkout })),
 );
@@ -54,14 +55,10 @@ type CartItem = {
 const PRODUCT = {
   id: "veda-kit",
   name: "VedaGlow 28-Day Kit",
-  price: 299,
+  price: 499,
 };
 
-const getDiscountedPrice = (qty: number) => {
-  if (qty === 1) return 299;
-  if (qty === 2) return 499;
-  return 499 + (qty - 2) * 299;
-};
+const getDiscountedPrice = (qty: number) => getPriceByQty(qty).discounted;
 
 type LegalPage = "privacy" | "cookie" | "terms" | "refund" | "shipping" | null;
 
@@ -89,7 +86,11 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
     if (!saved) return;
     try {
       const parsed = JSON.parse(saved) as CartItem[];
-      window.setTimeout(() => setCartItems(parsed), 0);
+      const normalized = parsed.map((item) => ({
+        ...item,
+        quantity: 1,
+      }));
+      window.setTimeout(() => setCartItems(normalized), 0);
     } catch {
       /* ignore */
     }
@@ -104,34 +105,26 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
     window.setTimeout(() => setNotice(""), 2500);
   };
 
-  const addToCart = (qtyOverride = 1) => {
+  const addToCart = () => {
     setCartItems((prev) => {
       const existing = prev.find((item) => item.id === PRODUCT.id);
       if (existing) {
-        return prev.map((item) =>
-          item.id === PRODUCT.id
-            ? { ...item, quantity: item.quantity + qtyOverride }
-            : item,
-        );
+        return prev;
       }
-      return [...prev, { ...PRODUCT, quantity: qtyOverride }];
+      return [...prev, { ...PRODUCT, quantity: 1 }];
     });
     showNotice("Added to cart");
   };
 
-  const addToCartAndOpen = (qtyOverride = 1) => {
-    addToCart(qtyOverride);
+  const addToCartAndOpen = () => {
+    addToCart();
     window.setTimeout(() => setCartOpen(true), 300);
   };
 
   const updateCartQuantity = (id: string, nextQuantity: number) => {
     setCartItems((prev) =>
       prev
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(1, nextQuantity) }
-            : item,
-        )
+        .map((item) => (item.id === id ? { ...item, quantity: 1 } : item))
         .filter((item) => item.quantity > 0),
     );
   };
@@ -229,31 +222,15 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
             </div>
             <div className="p-6 sm:p-7">
               <p className="text-center font-serif text-[1.5rem] leading-tight text-[#173229]">
-                Get 2 kits, double the results
+                Single kit, COD delivery across India
               </p>
 
               <div className="mt-5 rounded-2xl border border-[#e4d8c2] bg-white/80 p-5 text-center shadow-[0_24px_48px_-36px_rgba(15,23,42,0.45)]">
-                <div className="flex items-end justify-center gap-4">
-                  <div>
-                    <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-neutral-500">
-                      MRP
-                    </p>
-                    <span className="text-xl font-medium text-neutral-400 line-through">
-                      ₹598
-                    </span>
-                  </div>
-                  <span className="pb-1 text-[#b3935d]">→</span>
-                  <div>
-                    <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#5a4a2d]">
-                      Offer Price
-                    </p>
-                    <span className="text-[2.2rem] font-bold leading-none text-[#123f33]">
-                      ₹499
-                    </span>
-                  </div>
-                </div>
-                <p className="mt-3 inline-flex rounded-full border border-[#d8c6a0] bg-[#f8f1e2] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#6a5331]">
-                  Save ₹99 instantly
+                <p className="text-xl font-bold leading-none text-[#123f33]">
+                  ₹499
+                </p>
+                <p className="mt-3 text-sm text-neutral-600">
+                  Free delivery included on single-kit orders.
                 </p>
               </div>
 
@@ -262,21 +239,11 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
                   type="button"
                   onClick={() => {
                     setShowExitOffer(false);
-                    addToCartAndOpen(2);
+                    addToCartAndOpen();
                   }}
                   className="w-full rounded-xl bg-[linear-gradient(120deg,#144535_0%,#205443_100%)] px-6 py-4 text-base font-bold text-white shadow-[0_24px_44px_-26px_rgba(20,69,53,0.7)] transition-all hover:-translate-y-0.5 hover:bg-[linear-gradient(120deg,#103d2f_0%,#1a4a3b_100%)]"
                 >
-                  Get 2 Kits for ₹499
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowExitOffer(false);
-                    addToCartAndOpen(1);
-                  }}
-                  className="w-full rounded-xl border border-[#d9cfbc] bg-white/80 px-6 py-3.5 text-sm font-semibold text-[#374151] transition-colors hover:bg-[#f8f5ef]"
-                >
-                  Continue with 1 Kit (₹299)
+                  Claim 1 Kit - ₹499
                 </button>
               </div>
 

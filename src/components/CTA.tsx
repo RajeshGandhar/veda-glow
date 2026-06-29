@@ -26,7 +26,7 @@ export function CTA({ onAddToCart }: CTAProps) {
         <div className="grid items-center gap-9 lg:grid-cols-[1.08fr_0.92fr]">
           <div className="text-left">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#dccaa4] bg-[#faf2de] px-5 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.15em] text-[#6b5532]">
-          28-day complete ayurvedic kit
+              28-day complete ayurvedic kit
             </div>
 
             <h2 className="mb-4 font-serif text-3xl leading-tight text-[#172f24] sm:text-4xl md:text-[3.05rem]">
@@ -34,12 +34,17 @@ export function CTA({ onAddToCart }: CTAProps) {
             </h2>
 
             <p className="max-w-2xl text-base leading-8 text-neutral-700 sm:text-lg">
-              Three formulas. Weekly progress. Built for acne, oil control, and natural radiance.
+              Three formulas. Weekly progress. Built for acne, oil control, and
+              natural radiance.
             </p>
 
-            <div className={`mt-6 inline-flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold sm:text-sm ${
-              isUrgent ? "border-amber-300 bg-amber-50 text-amber-900" : "border-[#e8dcc8] bg-[#fffaf0] text-[#4a3b22]"
-            }`}>
+            <div
+              className={`mt-6 inline-flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold sm:text-sm ${
+                isUrgent
+                  ? "border-amber-300 bg-amber-50 text-amber-900"
+                  : "border-[#e8dcc8] bg-[#fffaf0] text-[#4a3b22]"
+              }`}
+            >
               <span>Only {stock} kits left</span>
               <span className="text-[#b89c6a]">•</span>
               <span>{viewers} viewing now</span>
@@ -58,10 +63,13 @@ export function CTA({ onAddToCart }: CTAProps) {
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#6b5532]">
               Starter Price
             </p>
-            <p className="mt-2 font-serif text-[2.2rem] leading-none text-[#173229] sm:text-[2.8rem]">₹299</p>
+            <p className="mt-2 font-serif text-[2.2rem] leading-none text-[#173229] sm:text-[2.8rem]">
+              ₹499
+            </p>
 
             <div className="mt-4 rounded-xl border border-[#e4d8c1] bg-white/75 px-4 py-3 text-sm text-neutral-700">
-              Payments & delivery: COD available, secure checkout, dispatch in 3-5 days
+              Payments & delivery: COD available, secure checkout, dispatch in
+              3-5 days
             </div>
 
             <div className="mt-5">
@@ -69,7 +77,7 @@ export function CTA({ onAddToCart }: CTAProps) {
                 onClick={handleAddToCart}
                 className="w-full min-h-[62px]! max-w-none bg-[#20483b]! text-base font-bold text-white shadow-[0_24px_46px_-28px_rgba(23,50,41,0.66)] hover:bg-[#173a2f]!"
               >
-                Add to Cart - Rs 299
+                Add to Cart - Rs 499
               </BuyNowButton>
               <p className="mt-3 text-center text-xs font-medium text-neutral-600">
                 Secure checkout with encrypted payment gateway.
