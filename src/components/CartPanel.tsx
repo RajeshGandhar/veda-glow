@@ -16,12 +16,8 @@ type Props = {
   onClose: () => void;
   onRemove: (id: string) => void;
   onCheckout: () => void;
-  onQuantityChange: (id: string, quantity: number) => void;
   onAddProduct?: () => void;
 };
-
-const SINGLE_KIT_PRICE = 499;
-const SINGLE_KIT_DELIVERY_CHARGE = 0;
 
 export function CartPanel({
   cartItems,
@@ -29,7 +25,6 @@ export function CartPanel({
   onClose,
   onRemove,
   onCheckout,
-  onQuantityChange,
   onAddProduct,
 }: Props) {
   const [isOpen, setIsOpen] = useState(true);
@@ -99,12 +94,6 @@ export function CartPanel({
     if (e.target === e.currentTarget) {
       closePanel();
     }
-  };
-
-  const handleItemQuantityChange = (item: CartItem, delta: number) => {
-    const nextQty = Math.max(1, item.quantity + delta);
-    if (nextQty === item.quantity) return;
-    onQuantityChange(item.id, nextQty);
   };
 
   return (

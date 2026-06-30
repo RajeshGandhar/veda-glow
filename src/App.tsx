@@ -121,14 +121,6 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
     window.setTimeout(() => setCartOpen(true), 300);
   };
 
-  const updateCartQuantity = (id: string, nextQuantity: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) => (item.id === id ? { ...item, quantity: 1 } : item))
-        .filter((item) => item.quantity > 0),
-    );
-  };
-
   const removeFromCart = (id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
   };
@@ -267,7 +259,6 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
             cartItems={cartItems}
             onBack={() => setPage("home")}
             onPlaceOrder={handleOrderPlaced}
-            onQuantityChange={updateCartQuantity}
           />
         </Suspense>
       ) : (
@@ -292,9 +283,8 @@ function StorefrontApp({ legalPage }: { legalPage: LegalPage }) {
           cartTotal={cartTotal}
           onClose={() => setCartOpen(false)}
           onRemove={removeFromCart}
-          onQuantityChange={updateCartQuantity}
           onCheckout={handleCheckout}
-          onAddProduct={() => addToCart(1)}
+          onAddProduct={() => addToCart()}
         />
       )}
     </div>

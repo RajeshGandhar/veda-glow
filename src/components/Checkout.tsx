@@ -16,7 +16,6 @@ type Props = {
   cartItems: CartItem[];
   onBack: () => void;
   onPlaceOrder: () => void;
-  onQuantityChange: (id: string, quantity: number) => void;
   onError?: (message: string) => void;
 };
 
@@ -37,8 +36,6 @@ type AddressForm = {
 type PincodeStatus = "idle" | "loading" | "success" | "error";
 
 const COD_ADVANCE = 39; // COD confirmation advance in INR
-const SINGLE_KIT_PRICE = 499;
-const SINGLE_KIT_DELIVERY_CHARGE = 0;
 const PINCODE_DEBOUNCE_MS = 500;
 
 function StepBadge({
@@ -139,7 +136,6 @@ function SummaryCard({
   isCod,
   totalAmount,
   remainingOnDelivery,
-  onQuantityChange,
 }: {
   mainItem: CartItem | undefined;
   deliveryCharge: number;
@@ -147,7 +143,6 @@ function SummaryCard({
   isCod: boolean;
   totalAmount: number;
   remainingOnDelivery: number;
-  onQuantityChange: (id: string, quantity: number) => void;
 }) {
   if (!mainItem) {
     return (
@@ -214,12 +209,7 @@ function SummaryCard({
   );
 }
 
-export function Checkout({
-  cartItems,
-  onBack,
-  onPlaceOrder,
-  onQuantityChange,
-}: Props) {
+export function Checkout({ cartItems, onBack, onPlaceOrder }: Props) {
   const [step, setStep] = useState<CheckoutStep>("address");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -857,7 +847,6 @@ export function Checkout({
             isCod={isCod}
             totalAmount={totalAmount}
             remainingOnDelivery={remainingOnDelivery}
-            onQuantityChange={onQuantityChange}
           />
 
           {orderError && (
